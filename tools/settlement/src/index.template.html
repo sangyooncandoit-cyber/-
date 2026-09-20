@@ -153,6 +153,18 @@ tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--surface-2)}
 tr.alert td.l::before{content:"▼ ";color:var(--loss);font-size:11px}
 
+.lock{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);
+  padding:18px 18px;margin-top:10px;display:flex;gap:14px;align-items:flex-start}
+.lock svg{flex:none;color:var(--accent);margin-top:2px}
+.lock .lt{font-weight:600;font-size:14.5px;margin-bottom:3px}
+.lock .ld{font-size:13px;color:var(--muted);line-height:1.6}
+.lock a{display:inline-flex;align-items:center;gap:6px;margin-top:11px;
+  background:var(--accent);color:#fff;text-decoration:none;font-weight:500;font-size:13.5px;
+  padding:9px 16px;border-radius:7px}
+.lock a:hover{opacity:.9}
+.lock a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.badge{font:600 10.5px/1 var(--mono);letter-spacing:.08em;background:var(--accent);color:#fff;
+  padding:3px 7px;border-radius:4px;margin-left:2px;vertical-align:2px}
 .empty{text-align:center;color:var(--muted);padding:30px 16px;font-size:13.5px}
 .foot{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
 .foot code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
@@ -165,7 +177,7 @@ h3.sub:first-child{margin-top:0}
 
 <div class="wrap">
   <div class="bar">
-    <div class="brand"><b>정산 엑스레이</b><span>오픈마켓 손익 분석</span></div>
+    <div class="brand"><b>정산 엑스레이</b><span id="edition">오픈마켓 손익 분석</span></div>
     <span class="privacy" title="파일은 브라우저 안에서만 처리됩니다">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
         aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 9.3 8 10 4.6-.7 8-5 8-10V6l-8-4z"/></svg>
@@ -235,6 +247,8 @@ h3.sub:first-child{margin-top:0}
         </tr></thead><tbody></tbody>
       </table></div>
 
+      <div class="lock" id="lock" hidden></div>
+
       <div class="btnrow" style="margin-top:12px">
         <button class="btn" id="copy" type="button">표 복사 (엑셀에 붙여넣기)</button>
         <button class="btn sm" id="reset" type="button">원가 초기화</button>
@@ -253,6 +267,9 @@ h3.sub:first-child{margin-top:0}
 
 <script>
 const SAMPLE = /*__SAMPLE__*/;
+const LITE = /*__LITE__*/;
+const BUY_URL = "https://claude.ai/artifact/VbpN25f9Cpw3nUXdTYAM9H";
+const LITE_ROWS = 3;   // 라이트에서 상품별로 보여주는 개수
 /*__CORE__*/
 
 const { num, findHeader, autoMap, detectFeeSigns, aggregate } = XRAY;
@@ -337,11 +354,17 @@ function renderResults(){
       <div class="s">${T.ad ? `매출의 ${pct(T.ad)}%` : "미입력"}</div></div>
     <div class="tile"><div class="k">적자 상품</div>
       <div class="v ${losers.length?"neg":""}">${losers.length}<span style="font-size:15px"> 개</span></div>
-      <div class="s">${losers.length ? `손실 ${fmt(losers.reduce((s,o)=>s+o.profit,0))}원` : "없음"}</div></div>`;
+      <div class="s">${losers.length
+        ? `손실 ${fmt(Math.abs(losers.reduce((s,o)=>s+o.profit,0)))}원` : "없음"}</div></div>`;
 
   // 발산형 막대: 0을 기준으로 흑자는 오른쪽, 적자는 왼쪽.
   // 색약 대비로 방향·부호·숫자까지 함께 쓴다 (색만으로 구분하지 않는다).
-  const sorted = [...list].sort((a,b) => b.profit - a.profit);
+  // 라이트: 매출 상위 몇 개만 상품별로 보여준다.
+  // 파일이 제대로 읽혔는지는 확인되지만, 어떤 상품이 적자인지는 가려진다.
+  const shown = LITE ? [...list].sort((a,b) => b.rev - a.rev).slice(0, LITE_ROWS) : list;
+  const hidden = list.length - shown.length;
+
+  const sorted = [...shown].sort((a,b) => b.profit - a.profit);
   const maxP = Math.max(1, ...sorted.map(o => Math.max(0, o.profit)));
   const maxL = Math.max(1, ...sorted.map(o => Math.max(0, -o.profit)));
   const span = maxP + maxL, zero = maxL / span * 100;
@@ -357,7 +380,7 @@ function renderResults(){
   }).join("");
 
   const {k, dir} = S.sort;
-  const rows = [...list].sort((a,b) =>
+  const rows = [...shown].sort((a,b) =>
     k === "name" ? dir * a.name.localeCompare(b.name, "ko") : dir * ((b[k]??0) - (a[k]??0)));
   document.querySelector("#tbl tbody").innerHTML = rows.map(o => `
     <tr class="${o.profit<0?"alert":""}">
@@ -365,6 +388,24 @@ function renderResults(){
       <td>${fmt(o.fee)}</td><td>${fmt(o.cogs)}</td><td>${fmt(o.ad)}</td>
       <td class="${o.profit>=0?"pos":"neg"}">${signed(o.profit)}</td>
       <td class="${o.profit>=0?"pos":"neg"}">${(o.margin*100).toFixed(1)}%</td></tr>`).join("");
+
+  const lockBox = document.getElementById("lock");
+  if (LITE && hidden > 0){
+    const lossLine = losers.length
+      ? `이 정산서에는 <b>적자 상품이 ${losers.length}개</b> 있습니다.
+         합계 ${fmt(Math.abs(losers.reduce((s,o)=>s+o.profit,0)))}원이
+         다른 상품이 번 돈에서 빠져나갔습니다.`
+      : `적자 상품은 없었습니다. 상품별 순이익과 마진율은 정식 버전에서 보실 수 있습니다.`;
+    lockBox.hidden = false;
+    lockBox.innerHTML = `
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <div><div class="lt">나머지 ${hidden}개 상품은 가려져 있습니다</div>
+        <div class="ld">${lossLine}<br>
+          어떤 상품인지, 얼마나 손해인지는 정식 버전에서 확인하실 수 있습니다.</div>
+        <a href="${BUY_URL}" target="_blank" rel="noopener">정식 버전 보기</a></div>`;
+  } else if (lockBox) lockBox.hidden = true;
 
   for (const id of ["s2","s3","s4"]) document.getElementById(id).hidden = false;
 }
@@ -434,6 +475,7 @@ document.getElementById("reset").onclick = () => {
   S.costs = {}; saveCosts(); renderCosts(); renderResults();
 };
 document.getElementById("copy").onclick = async () => {
+  if (LITE) return;
   const list = items().sort((a,b) => a.profit - b.profit);
   const tsv = ["상품명\t수량\t매출\t수수료\t원가\t광고비\t순이익\t마진율(%)",
     ...list.map(o => [o.name, Math.round(o.qty), Math.round(o.rev), Math.round(o.fee),
@@ -450,6 +492,17 @@ document.getElementById("copy").onclick = async () => {
     btn.textContent = "아래 칸의 내용을 복사하세요";
   }
 };
+
+if (LITE){
+  document.getElementById("edition").innerHTML =
+    '<span class="badge">LITE</span> 무료 체험판';
+  const cp = document.getElementById("copy");
+  cp.textContent = "표 복사는 정식 버전 기능입니다";
+  cp.disabled = true;
+  cp.style.opacity = ".55";
+  cp.style.cursor = "not-allowed";
+  document.title = "정산 엑스레이 Lite";
+}
 
 // 빈 껍데기가 아니라, 처음부터 결과가 보이는 상태로 연다
 S.costs = loadCosts();
