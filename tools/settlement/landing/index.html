@@ -1,0 +1,316 @@
+<title>통장에 찍힌 돈, 다 내 돈일까</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#EEF1F4; --paper:#FFFFFF; --sunk:#E3E8ED;
+  --ink:#121820; --ink-2:#39434F; --muted:#5F6976; --line:#DCE2E8; --line-2:#C5CDD6;
+  --accent:#0E4F58; --accent-2:#0B6B6B; --accent-soft:#DFEDEE;
+  --profit:#0B7A4B; --loss:#C42B1C;
+  --sans:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0B0F14; --paper:#141A21; --sunk:#10161C;
+    --ink:#E7ECF2; --ink-2:#BFC8D3; --muted:#8892A0; --line:#222A34; --line-2:#323C48;
+    --accent:#59B8AE; --accent-2:#6FC9BC; --accent-soft:#102528;
+    --profit:#1FA97F; --loss:#D9534A;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0B0F14; --paper:#141A21; --sunk:#10161C;
+  --ink:#E7ECF2; --ink-2:#BFC8D3; --muted:#8892A0; --line:#222A34; --line-2:#323C48;
+  --accent:#59B8AE; --accent-2:#6FC9BC; --accent-soft:#102528;
+  --profit:#1FA97F; --loss:#D9534A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.72;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding-inline:20px;padding-block:0 72px}
+section{padding-block:46px;border-top:1px solid var(--line)}
+section:first-of-type{border-top:0}
+h1,h2,h3{text-wrap:balance;letter-spacing:-.025em;margin:0}
+h1{font-size:clamp(28px,6.4vw,44px);font-weight:700;line-height:1.28}
+h2{font-size:clamp(20px,3.6vw,25px);font-weight:600;line-height:1.4;margin-bottom:8px}
+h3{font-size:16px;font-weight:600;margin-bottom:4px}
+p{margin:0 0 15px;color:var(--ink-2);max-width:62ch}
+p:last-child{margin-bottom:0}
+.lede{font-size:17.5px;color:var(--ink-2)}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.13em;color:var(--accent);
+  text-transform:uppercase;margin-bottom:16px;display:block}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.pos{color:var(--profit)} .neg{color:var(--loss)}
+
+/* ── 영수증: 이 페이지의 논지 ── */
+.receipt{background:var(--paper);border:1px solid var(--line);border-radius:3px;
+  padding:26px 22px 22px;margin:26px 0 0;
+  box-shadow:0 1px 0 var(--line-2),0 14px 34px -22px rgba(12,24,34,.5)}
+.receipt .rh{font:600 11.5px/1 var(--mono);letter-spacing:.14em;color:var(--muted);
+  text-transform:uppercase;padding-bottom:13px;margin-bottom:6px;border-bottom:1.5px solid var(--ink)}
+.rline{display:flex;align-items:baseline;gap:10px;padding:7px 0;font-family:var(--mono);font-size:14px}
+.rline .lbl{color:var(--ink-2);white-space:nowrap}
+.rline .dots{flex:1;border-bottom:1px dotted var(--line-2);transform:translateY(-4px);min-width:14px}
+.rline .amt{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500}
+.rline.sub{border-top:1px solid var(--line);margin-top:6px;padding-top:11px}
+.rline.sub .lbl,.rline.sub .amt{font-weight:600;color:var(--ink)}
+.rline.ded .lbl,.rline.ded .amt{color:var(--muted)}
+.rline.total{border-top:1.5px solid var(--ink);margin-top:10px;padding-top:15px;align-items:flex-end}
+.rline.total .lbl{font-size:13px;font-weight:600;color:var(--ink)}
+.rline.total .amt{font-size:clamp(23px,5.6vw,31px);font-weight:600;letter-spacing:-.03em}
+.rnote{font-size:12.5px;color:var(--muted);margin-top:15px;padding-top:13px;
+  border-top:1px dotted var(--line-2);line-height:1.6}
+.rnote b{color:var(--ink)}
+
+.cta{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;
+  font:600 15px/1 var(--sans);padding:14px 24px;border-radius:7px;text-decoration:none;
+  border:1px solid var(--accent);transition:transform .12s,box-shadow .12s}
+.cta:hover{transform:translateY(-1px);box-shadow:0 8px 20px -10px var(--accent)}
+.cta:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.cta.ghost{background:transparent;color:var(--accent);border-color:var(--line-2)}
+.cta.ghost:hover{border-color:var(--accent);box-shadow:none}
+.ctarow{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin-top:22px}
+.ctarow small{color:var(--muted);font-size:13px}
+
+/* ── 적자 상품 ── */
+.finds{display:grid;gap:9px;margin-top:20px}
+.find{display:flex;align-items:center;gap:13px;background:var(--paper);
+  border:1px solid var(--line);border-left:3px solid var(--loss);border-radius:5px;padding:13px 15px}
+.find .nm{flex:1;min-width:0;font-weight:500;font-size:14.5px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.find .v{font-family:var(--mono);font-weight:600;font-size:15px;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.find .m{font-family:var(--mono);font-size:12.5px;color:var(--muted);width:52px;text-align:right}
+
+/* ── 단계 ── */
+.steps{counter-reset:s;display:grid;gap:2px;margin-top:20px;
+  border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--line)}
+.stp{background:var(--paper);padding:15px 17px 15px 50px;position:relative}
+.stp::before{counter-increment:s;content:counter(s);position:absolute;left:17px;top:16px;
+  width:21px;height:21px;border-radius:5px;background:var(--accent-soft);color:var(--accent);
+  font:600 11.5px/21px var(--mono);text-align:center}
+.stp p{margin:1px 0 0;font-size:14px;color:var(--muted)}
+
+/* ── 비교표 ── */
+.cmp{overflow-x:auto;margin-top:20px;border:1px solid var(--line);border-radius:7px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:530px}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--sunk);font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.03em}
+thead th.mine{color:var(--accent)}
+tbody td:nth-child(2){background:var(--accent-soft)}
+thead th.mine{background:var(--accent-soft)}
+.cmp{position:relative}
+.scrollhint{display:none;font-size:12.5px;color:var(--muted);margin-top:9px}
+@media(max-width:640px){.scrollhint{display:block}}
+tbody tr:last-child td{border-bottom:none}
+td:first-child{font-weight:500;color:var(--ink);white-space:nowrap}
+td:last-child{color:var(--ink);font-weight:500}
+.yes{color:var(--profit);font-weight:600} .no{color:var(--muted)}
+
+/* ── 처리 항목 ── */
+.caps{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:2px;
+  margin-top:20px;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--line)}
+.cap{background:var(--paper);padding:15px 17px}
+.cap h3{font-size:14.5px}
+.cap p{font-size:13.5px;margin:0;color:var(--muted)}
+.cap code{font-family:var(--mono);font-size:12px;background:var(--sunk);padding:1px 5px;
+  border-radius:3px;color:var(--ink-2)}
+
+/* ── 가격 ── */
+.price{background:var(--paper);border:1.5px solid var(--line-2);border-radius:9px;
+  padding:26px 24px;margin-top:22px}
+.price .tag{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.price .tag b{font:600 38px/1 var(--mono);letter-spacing:-.03em}
+.price .tag span{color:var(--muted);font-size:14px}
+.price ul{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.price li{font-size:14.5px;color:var(--ink-2);padding-left:22px;position:relative}
+.price li::before{content:"";position:absolute;left:2px;top:9px;width:7px;height:7px;
+  border-radius:2px;background:var(--accent)}
+
+/* ── 한계 ── */
+.limits{background:var(--sunk);border:1px solid var(--line);border-radius:7px;padding:19px 21px;margin-top:20px}
+.limits ul{margin:0;padding-left:19px;display:grid;gap:7px}
+.limits li{font-size:14px;color:var(--ink-2)}
+.limits li b{color:var(--ink)}
+
+/* ── FAQ ── */
+details{border-bottom:1px solid var(--line);padding:2px 0}
+details summary{cursor:pointer;padding:13px 0;font-weight:500;font-size:15px;list-style:none;
+  display:flex;align-items:center;gap:10px}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+";font-family:var(--mono);color:var(--accent);font-weight:600;flex:none}
+details[open] summary::before{content:"−"}
+details summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+details p{font-size:14.5px;padding:0 0 13px 22px;margin:0;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-top:22px;margin-top:46px;
+  font-size:13px;color:var(--muted);line-height:1.7}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <section>
+    <span class="eyebrow">오픈마켓 셀러를 위한 정산 분석</span>
+    <h1>통장에 <span class="num">5,692,369원</span>이 들어왔습니다.<br>
+        실제로 번 돈은 <span class="num pos">1,925,069원</span>입니다.</h1>
+    <p class="lede" style="margin-top:18px">
+      정산서는 얼마가 입금되는지만 알려줍니다. 그 돈에서 원가와 광고비를 빼면 얼마가 남는지,
+      <b>어떤 상품이 돈을 잃고 있는지</b>는 알려주지 않습니다.</p>
+
+    <div class="receipt">
+      <div class="rh">2026년 9월 · 주문 253건 · 상품 10개</div>
+      <div class="rline"><span class="lbl">매출</span><span class="dots"></span>
+        <span class="amt">6,112,500</span></div>
+      <div class="rline ded"><span class="lbl">− 판매·결제 수수료</span><span class="dots"></span>
+        <span class="amt">420,131</span></div>
+      <div class="rline sub"><span class="lbl">= 정산 입금액</span><span class="dots"></span>
+        <span class="amt">5,692,369</span></div>
+      <div class="rline ded"><span class="lbl">− 매입 원가</span><span class="dots"></span>
+        <span class="amt">3,317,300</span></div>
+      <div class="rline ded"><span class="lbl">− 광고비</span><span class="dots"></span>
+        <span class="amt">450,000</span></div>
+      <div class="rline total"><span class="lbl">실제 순이익</span><span class="dots"></span>
+        <span class="amt pos">1,925,069</span></div>
+      <p class="rnote">입금액의 <b>33.8%</b>만 실제 이익입니다.
+        그리고 이 안에는 <b>팔수록 손해인 상품 2개</b>가 숨어 있습니다.</p>
+    </div>
+
+    <div class="ctarow">
+      <a class="cta" href="https://claude.ai/artifact/Q3HHhAxiz6dHrh8xzUuUPh" target="_blank" rel="noopener">
+        내 정산서로 확인해보기</a>
+      <small>설치 없음 · 회원가입 없음 · 파일 업로드 없음</small>
+    </div>
+  </section>
+
+  <section>
+    <h2>팔수록 손해인 상품은 티가 안 납니다</h2>
+    <p>전체 마진율이 31.5%면 괜찮아 보입니다. 하지만 상품별로 쪼개보면 이야기가 달라집니다.
+      아래는 위 정산서에서 실제로 걸러낸 상품입니다.</p>
+    <div class="finds">
+      <div class="find"><span class="nm">유기농 아몬드 1kg</span>
+        <span class="v neg">−26,167원</span><span class="m">−6.0%</span></div>
+      <div class="find"><span class="nm">실리콘 주방 집게 2p</span>
+        <span class="v neg">−12,355원</span><span class="m">−6.3%</span></div>
+    </div>
+    <p style="margin-top:18px">원가가 오르거나 광고비가 붙으면 마진은 조용히 음수로 넘어갑니다.
+      정산서 총액만 봐서는 이 두 상품이 다른 상품이 번 돈을 갉아먹고 있다는 걸 알 수 없습니다.</p>
+  </section>
+
+  <section>
+    <h2>쓰는 법은 네 단계입니다</h2>
+    <div class="steps">
+      <div class="stp"><h3>정산 엑셀을 끌어다 놓습니다</h3>
+        <p>스마트스토어·쿠팡·11번가·지마켓. 받은 파일 그대로 넣으면 됩니다.</p></div>
+      <div class="stp"><h3>컬럼을 자동으로 잡습니다</h3>
+        <p>상품명·수량·매출·수수료 위치를 알아서 찾습니다. 틀리면 직접 바꿀 수 있습니다.</p></div>
+      <div class="stp"><h3>원가와 광고비를 넣습니다</h3>
+        <p>상품별 매입가는 한 번만 넣으면 브라우저에 기억됩니다.</p></div>
+      <div class="stp"><h3>상품별 손익이 나옵니다</h3>
+        <p>적자 상품이 먼저 보이고, 표는 엑셀에 그대로 붙여넣을 수 있습니다.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>이미 있는 것들과 무엇이 다른가</h2>
+    <div class="cmp"><table>
+      <thead><tr><th></th><th class="mine">정산 엑스레이</th><th>무료 마진 계산기</th>
+        <th>연동형 정산 서비스</th></tr></thead>
+      <tbody>
+        <tr><td>계산 대상</td><td class="yes">실제 정산 내역</td><td class="no">앞으로의 예상 마진</td>
+          <td>실제 정산 내역</td></tr>
+        <tr><td>입력 방식</td><td class="yes">파일 한 번에 수백 행</td><td class="no">상품 하나씩 손으로</td>
+          <td>계정 연동</td></tr>
+        <tr><td>계정 연동</td><td class="yes">불필요</td><td>불필요</td><td class="no">필수</td></tr>
+        <tr><td>매출 자료 전송</td><td class="yes">기기 밖으로 안 나감</td><td>없음</td>
+          <td class="no">서버로 전송</td></tr>
+        <tr><td>비용</td><td class="yes">1회 구매</td><td>무료</td><td class="no">월 구독</td></tr>
+      </tbody>
+    </table></div>
+    <p class="scrollhint">표를 옆으로 밀면 나머지 항목이 보입니다.</p>
+    <p style="margin-top:18px">정산 파일에는 한 달 매출이 전부 담겨 있습니다.
+      그래서 이 도구에는 서버가 없습니다. 계산은 전부 브라우저 안에서 끝나고,
+      인터넷을 끊어도 동작합니다.</p>
+  </section>
+
+  <section>
+    <h2>정산 파일이 지저분해도 읽습니다</h2>
+    <p>마켓마다 정산 파일 모양이 다릅니다. 컬럼 이름을 고정해두면 바로 깨지기 때문에,
+      까다로운 경우를 하나씩 처리하도록 만들었습니다.</p>
+    <div class="caps">
+      <div class="cap"><h3>제목 줄이 위에 붙어 있어도</h3>
+        <p>파일 상단의 제목·조회기간 줄을 건너뛰고 진짜 헤더를 찾습니다.</p></div>
+      <div class="cap"><h3>수수료 부호가 마켓마다 달라도</h3>
+        <p>스마트스토어는 양수, 쿠팡은 음수로 적습니다. 매출 부호와 대조해 자동으로 맞춥니다.</p></div>
+      <div class="cap"><h3>수수료가 여러 칸에 쪼개져 있어도</h3>
+        <p>결제수수료·판매수수료·쿠폰분담금이 따로 있으면 모두 더합니다.</p></div>
+      <div class="cap"><h3>반품이 섞여 있어도</h3>
+        <p>음수 행으로 인식해 매출·수수료·원가에서 함께 뺍니다.</p></div>
+      <div class="cap"><h3>숫자가 글자로 저장돼 있어도</h3>
+        <p><code>39,900</code> <code>(1,234)</code> <code>△500</code> <code>₩12,000</code> 모두 읽습니다.</p></div>
+      <div class="cap"><h3>맨 아래 합계 줄이 있어도</h3>
+        <p>합계·소계 줄을 상품으로 세지 않습니다.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>가격</h2>
+    <div class="price">
+      <div class="tag"><b>49,000</b><span>원 · 1회 구매</span></div>
+      <ul>
+        <li>구매 후 파일로 받아 내 컴퓨터에 보관합니다</li>
+        <li>월 구독료 없음. 다음 달에도 그대로 씁니다</li>
+        <li>정산 파일 개수·행수 제한 없음</li>
+        <li>업데이트 무료</li>
+      </ul>
+      <div class="ctarow">
+        <a class="cta" href="https://claude.ai/artifact/Q3HHhAxiz6dHrh8xzUuUPh" target="_blank" rel="noopener">
+          먼저 무료로 써보기</a>
+        <a class="cta ghost" href="#faq">궁금한 점 보기</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>미리 말씀드릴 것</h2>
+    <p>살 만한 물건인지 판단하시라고, 못 하는 것도 적어둡니다.</p>
+    <div class="limits"><ul>
+      <li><b>세무 신고용이 아닙니다.</b> 부가세·배송비·재고 평가는 계산에 넣지 않습니다.
+        손익을 빠르게 파악하는 용도입니다.</li>
+      <li><b>광고비는 매출 비중으로 배분합니다.</b> 상품별 실제 집행 내역이 있다면 그쪽이 더 정확합니다.</li>
+      <li><b>원가는 직접 넣으셔야 합니다.</b> 매입가는 정산 파일에 없는 정보라 자동으로 알 수 없습니다.</li>
+      <li><b>처음 보는 컬럼 이름은 직접 지정해야 할 수 있습니다.</b>
+        자주 쓰이는 이름은 자동으로 잡지만, 마켓이 양식을 바꾸면 화면에서 바로 바꿀 수 있게 해뒀습니다.</li>
+    </ul></div>
+  </section>
+
+  <section id="faq">
+    <h2>자주 묻는 것</h2>
+    <details><summary>정산 파일이 어디로 전송되나요?</summary>
+      <p>전송되지 않습니다. 서버가 없어서 보낼 곳도 없습니다. 파일을 넣는 순간부터 계산이 끝날 때까지
+        전부 브라우저 안에서 처리됩니다. 인터넷 연결을 끊고 써보셔도 똑같이 동작합니다.</p></details>
+    <details><summary>엑셀을 잘 몰라도 쓸 수 있나요?</summary>
+      <p>마켓에서 받은 정산 파일을 그대로 끌어다 놓으면 됩니다. 수식을 쓰거나 표를 만들 필요는 없습니다.
+        직접 넣으실 값은 상품별 매입원가와 그 달 광고비 총액뿐입니다.</p></details>
+    <details><summary>여러 마켓을 함께 볼 수 있나요?</summary>
+      <p>현재는 파일 하나씩 분석합니다. 스마트스토어와 쿠팡을 각각 넣어 따로 보는 방식입니다.
+        여러 마켓 합산은 앞으로 넣을 기능입니다.</p></details>
+    <details><summary>원가를 매번 다시 입력해야 하나요?</summary>
+      <p>아니요. 한 번 넣으면 쓰시던 브라우저에 저장돼 다음에 열 때 그대로 있습니다.
+        다만 같은 브라우저에서만 유지되므로, 컴퓨터를 바꾸면 다시 넣으셔야 합니다.</p></details>
+    <details><summary>결과를 엑셀로 옮길 수 있나요?</summary>
+      <p>표 복사 버튼을 누르면 엑셀·구글 시트에 바로 붙여넣을 수 있는 형태로 복사됩니다.</p></details>
+    <details><summary>계산이 정확한지 어떻게 믿나요?</summary>
+      <p>계산 로직은 화면과 분리돼 있고, 별도로 계산한 정답과 대조하는 검증을 거칩니다.
+        스마트스토어형·쿠팡형 두 가지 정산 파일에서 상품별 수량·매출·수수료·원가·순이익이
+        모두 일치하는지 확인합니다. 그래도 첫 달은 기존 방식과 나란히 놓고 비교해보시길 권합니다.</p></details>
+  </section>
+
+  <footer>
+    화면의 모든 숫자는 공개된 수수료 구조로 만든 예시 정산 데이터에서 나온 실제 계산 결과입니다.
+    실제 판매 데이터가 아닙니다.<br>
+    수수료율은 계약 조건에 따라 달라집니다. 이 도구는 손익 파악을 돕고, 세무 신고를 대신하지 않습니다.
+  </footer>
+
+</div>
