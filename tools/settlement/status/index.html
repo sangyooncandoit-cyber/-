@@ -1,0 +1,210 @@
+<title>남은 건 올리는 일</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#EFF2F5; --paper:#FFFFFF; --sunk:#E4E9EE;
+  --ink:#121820; --ink-2:#39434F; --muted:#5F6976; --line:#DCE2E8; --line-2:#C5CDD6;
+  --accent:#0E4F58; --accent-soft:#DEEDEE;
+  --done:#0B7A4B; --todo:#B45309; --todo-soft:#FBF1E0; --risk:#C42B1C;
+  --sans:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --mono:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0B0F14; --paper:#141A21; --sunk:#10161C;
+  --ink:#E7ECF2; --ink-2:#BFC8D3; --muted:#8892A0; --line:#222A34; --line-2:#323C48;
+  --accent:#59B8AE; --accent-soft:#102528;
+  --done:#1FA97F; --todo:#D9A441; --todo-soft:#2A2113; --risk:#D9534A;}}
+:root[data-theme="dark"]{
+  --ground:#0B0F14; --paper:#141A21; --sunk:#10161C;
+  --ink:#E7ECF2; --ink-2:#BFC8D3; --muted:#8892A0; --line:#222A34; --line-2:#323C48;
+  --accent:#59B8AE; --accent-soft:#102528;
+  --done:#1FA97F; --todo:#D9A441; --todo-soft:#2A2113; --risk:#D9534A;}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15.5px;
+  line-height:1.72;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:32px 72px}
+h1{font-size:clamp(25px,5.6vw,34px);font-weight:700;letter-spacing:-.03em;line-height:1.3;
+  text-wrap:balance}
+h2{font-size:18px;font-weight:600;letter-spacing:-.02em;margin:40px 0 12px;
+  padding-bottom:8px;border-bottom:1px solid var(--line);text-wrap:balance}
+p{color:var(--ink-2);margin-bottom:12px;max-width:62ch}
+.eyebrow{font:600 11.5px/1 var(--mono);letter-spacing:.11em;color:var(--accent);
+  text-transform:uppercase;display:block;margin-bottom:12px}
+.lede{font-size:16.5px;margin-top:14px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* 상태 */
+.state{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
+  border-radius:8px;overflow:hidden;margin-top:6px}
+.st{background:var(--paper);display:flex;align-items:center;gap:11px;padding:11px 14px;font-size:14.5px}
+.st .m{flex:none;width:17px;height:17px;border-radius:5px;display:grid;place-items:center;
+  font:700 10px/1 var(--mono);color:#fff}
+.st.ok .m{background:var(--done)} .st.ok .m::after{content:"✓"}
+.st.no .m{background:var(--todo)} .st.no .m::after{content:"!"}
+.st .t{flex:1;min-width:0}
+.st .n{font-size:12.5px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+
+/* 링크 카드 */
+.links{display:grid;gap:9px;margin-top:6px}
+.lk{display:flex;align-items:center;gap:13px;background:var(--paper);border:1px solid var(--line);
+  border-radius:8px;padding:13px 15px;text-decoration:none;color:var(--ink);transition:border-color .12s}
+.lk:hover{border-color:var(--accent)}
+.lk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lk .ic{flex:none;width:30px;height:30px;border-radius:7px;background:var(--accent-soft);
+  color:var(--accent);display:grid;place-items:center;font:600 12px/1 var(--mono)}
+.lk .b{flex:1;min-width:0}
+.lk .b b{display:block;font-size:14.5px;font-weight:600}
+.lk .b span{display:block;font-size:12.5px;color:var(--muted);line-height:1.5}
+.lk .go{flex:none;color:var(--muted);font-size:17px}
+
+/* 파일 */
+.files{border:1px solid var(--line);border-radius:8px;background:var(--paper);
+  padding:4px 15px;margin-top:6px}
+.fl{display:flex;align-items:baseline;gap:10px;padding:9px 0;font-size:14px;
+  border-bottom:1px solid var(--line)}
+.fl:last-child{border-bottom:none}
+.fl code{font-family:var(--mono);font-size:12.5px;color:var(--ink);white-space:nowrap}
+.fl span{color:var(--muted);font-size:12.5px;margin-left:auto;text-align:right}
+
+/* 단계 */
+.steps{counter-reset:s;display:grid;gap:2px;background:var(--line);border:1px solid var(--line);
+  border-radius:8px;overflow:hidden;margin-top:6px}
+.sp{background:var(--paper);padding:14px 16px 14px 47px;position:relative}
+.sp::before{counter-increment:s;content:counter(s);position:absolute;left:15px;top:15px;
+  width:21px;height:21px;border-radius:6px;background:var(--accent);color:#fff;
+  font:600 11.5px/21px var(--mono);text-align:center}
+.sp b{font-size:14.5px;font-weight:600}
+.sp p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
+.tag{display:inline-block;font:600 10.5px/1 var(--mono);letter-spacing:.06em;padding:3px 7px;
+  border-radius:4px;margin-left:7px;vertical-align:1.5px}
+.tag.m{background:var(--accent-soft);color:var(--accent)}
+.tag.p{background:var(--todo-soft);color:var(--todo)}
+
+/* 리스크 */
+.risks{display:grid;gap:9px;margin-top:6px}
+.rk{background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--risk);
+  border-radius:7px;padding:13px 15px}
+.rk b{display:block;font-size:14.5px;font-weight:600;margin-bottom:3px}
+.rk p{margin:0;font-size:13.5px;color:var(--muted)}
+
+.callout{background:var(--sunk);border:1px solid var(--line);border-radius:8px;
+  padding:16px 18px;margin-top:6px}
+.callout b{color:var(--ink)}
+.callout p:last-child{margin-bottom:0}
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);line-height:1.7}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <span class="eyebrow">정산 엑스레이 · 2026년 9월 20일</span>
+  <h1>만들 건 다 만들었습니다.<br>남은 건 올리는 일입니다.</h1>
+  <p class="lede">오픈마켓 셀러의 정산 엑셀에서 상품별 진짜 순이익과
+    적자 상품을 찾아주는 도구. 도구·판매 페이지·문구·이미지까지 전부 준비됐고,
+    계산은 <span class="num">34개</span> 항목 검증을 통과했습니다.</p>
+
+  <h2>지금 상태</h2>
+  <div class="state">
+    <div class="st ok"><span class="m"></span><span class="t">도구 (정식판 · 라이트판)</span>
+      <span class="n">검증 34/34</span></div>
+    <div class="st ok"><span class="m"></span><span class="t">판매 페이지</span><span class="n">발행됨</span></div>
+    <div class="st ok"><span class="m"></span><span class="t">크몽·Gumroad 등록 문구</span>
+      <span class="n">복사 23블록</span></div>
+    <div class="st ok"><span class="m"></span><span class="t">커버 이미지</span><span class="n">7장</span></div>
+    <div class="st ok"><span class="m"></span><span class="t">판매용 ZIP 패키지</span>
+      <span class="n">오프라인 검증</span></div>
+    <div class="st no"><span class="m"></span><span class="t">크몽 등록</span>
+      <span class="n">PC 1회 필요</span></div>
+    <div class="st no"><span class="m"></span><span class="t">라이트 배포 (유입 만들기)</span>
+      <span class="n">아직</span></div>
+  </div>
+
+  <h2>링크 4개</h2>
+  <div class="links">
+    <a class="lk" href="https://claude.ai/artifact/BA2SCuYfrjucy7veU2qMHh" target="_blank" rel="noopener">
+      <span class="ic">무료</span><span class="b"><b>라이트판</b>
+        <span>커뮤니티에 뿌릴 미끼. 전체 손익과 적자 개수까지 보여주고 상세는 3개까지</span></span>
+      <span class="go">›</span></a>
+    <a class="lk" href="https://claude.ai/artifact/VbpN25f9Cpw3nUXdTYAM9H" target="_blank" rel="noopener">
+      <span class="ic">판매</span><span class="b"><b>랜딩페이지</b>
+        <span>영수증으로 입금액과 실제 순이익의 차이를 보여주는 판매 페이지</span></span>
+      <span class="go">›</span></a>
+    <a class="lk" href="https://claude.ai/artifact/MJdAU3SJDmF6EvCTJmXk7N" target="_blank" rel="noopener">
+      <span class="ic">문구</span><span class="b"><b>판매 문구 덱</b>
+        <span>크몽·Gumroad 등록란에 붙여넣을 문구. 블록마다 복사 버튼</span></span>
+      <span class="go">›</span></a>
+    <a class="lk" href="https://claude.ai/artifact/Q3HHhAxiz6dHrh8xzUuUPh" target="_blank" rel="noopener">
+      <span class="ic">도구</span><span class="b"><b>정식판 (참고용)</b>
+        <span>파는 건 이 링크가 아니라 아래 ZIP 파일입니다</span></span>
+      <span class="go">›</span></a>
+  </div>
+
+  <div class="callout" style="margin-top:12px">
+    <p><b>링크 2개는 공개로 바꿔야 합니다.</b> 지금은 전부 비공개라 본인만 열립니다.
+      각 페이지 우측 상단 <b>Share</b> 메뉴에서 라이트판과 랜딩페이지를 공개하세요.
+      랜딩페이지 버튼이 라이트판으로 연결돼 있어 <b>둘 다</b> 해야 링크가 삽니다.</p>
+  </div>
+
+  <h2>대화에서 받은 파일</h2>
+  <div class="files">
+    <div class="fl"><code>정산엑스레이_v1.zip</code><span>크몽·Gumroad에 올릴 상품 파일</span></div>
+    <div class="fl"><code>정산엑스레이_Lite_v1.zip</code><span>무료 배포용</span></div>
+    <div class="fl"><code>01~05_크몽.png</code><span>크몽 미리보기 (최소 5장 조건 충족)</span></div>
+    <div class="fl"><code>06·07_gumroad.png</code><span>Gumroad 커버·썸네일</span></div>
+  </div>
+
+  <h2>다음에 할 일</h2>
+  <div class="steps">
+    <div class="sp"><b>크몽 전문가 등록<span class="tag m">모바일</span></b>
+      <p>앱에서 본인인증과 계좌 입력이면 끝. 사업자등록증은 필요 없습니다.</p></div>
+    <div class="sp"><b>데스크톱 모드로 등록 화면 진입 시도<span class="tag m">모바일</span></b>
+      <p>크롬·사파리에서 "데스크톱 사이트 요청". 되면 그대로 진행, 안 되면 다음으로.</p></div>
+    <div class="sp"><b>서비스 등록<span class="tag p">PC 1회</span></b>
+      <p>노하우·콘텐츠 &gt; 자료·템플릿. 49,000원 단일 상품. 문구 덱에서 복사,
+        커버 01~05, 파일은 ZIP. 심사는 영업일 7일.</p></div>
+    <div class="sp"><b>라이트판 뿌리기<span class="tag m">모바일</span></b>
+      <p>여기가 진짜입니다. 앞의 셋은 판매대를 차리는 일이고, 이건 사람을 데려오는 일입니다.
+        네이버 카페·오픈채팅·블로그에 "적자 상품 있는지 확인해보세요"로.</p></div>
+  </div>
+
+  <h2>알고 있어야 할 것</h2>
+  <div class="risks">
+    <div class="rk"><b>실제 정산 파일로 검증하지 못했습니다</b>
+      <p>컬럼 매핑은 공개 자료로 추정해 만들었습니다. 스마트스토어·쿠팡 실제 파일
+        하나만 구하면 정확도가 크게 올라갑니다. 지금도 가장 중요한 한 가지입니다.</p></div>
+    <div class="rk"><b>라이트판 잠금은 풀 수 있습니다</b>
+      <p>브라우저에서 도는 코드라 개발자 도구를 열 줄 알면 몇 분이면 풉니다.
+        막으려면 서버가 필요한데, 그러면 "파일이 기기 밖으로 안 나간다"는 가장 강한
+        셀링 포인트가 사라집니다. 맞바꿀 가치가 없다고 판단했습니다.</p></div>
+    <div class="rk"><b>통신판매업 신고 대상일 수 있습니다</b>
+      <p>디지털 콘텐츠 판매도 대상에 들어갑니다. 거래 횟수·규모 기준을 넘으면 신고 후
+        판매해야 하고, 미신고 시 벌금이 있을 수 있습니다. 정부24나 공정위에서
+        본인 상황을 확인하세요. 법률 자문이 아니라 메모입니다.</p></div>
+    <div class="rk"><b>Gumroad에는 한국 셀러 유입이 없습니다</b>
+      <p>검색 유입이 영어권 위주라, 이 제품이 거기서 저절로 발견될 일은 없습니다.
+        결제·배송 파이프로만 쓰고, 유입은 크몽과 커뮤니티에서 만드는 게 맞습니다.</p></div>
+  </div>
+
+  <h2>손절 기준</h2>
+  <div class="callout">
+    <p><b>라이트판 배포 후 90일 안에 판매 10건 미만이면 접습니다.</b></p>
+    <p>미리 정해두는 이유는, 나중에는 못 정하기 때문입니다.
+      지금까지 들어간 현금은 <b>0원</b>이고 앞으로도 0원입니다.
+      실패해도 잃는 건 시간뿐이니, 기준을 넘기지 못하면 미련 없이 정리하고
+      다음 걸 해보는 편이 낫습니다.</p>
+  </div>
+
+  <h2>수치는 전부 같은 곳에서 나옵니다</h2>
+  <p>랜딩페이지·문구·커버 이미지에 적힌 숫자는 손으로 쓴 게 아니라,
+    검증된 계산 로직에 예시 정산 데이터를 통과시켜 얻은 값입니다.
+    그래서 광고에 적힌 수치와 도구가 실제로 내놓는 수치가 어긋날 수 없습니다.
+    예시 데이터라는 사실은 모든 페이지에 밝혀 두었습니다.</p>
+
+  <footer>
+    소스·검증 스크립트·빌드는 저장소 <code>claude/annyeong-p9z66x</code> 브랜치에 있습니다.<br>
+    계산은 손익 파악용이며 세무 신고를 대신하지 않습니다.
+    수수료율은 계약 조건에 따라 달라집니다.
+  </footer>
+</div>
