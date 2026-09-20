@@ -1,0 +1,518 @@
+<title>판매 문구 덱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F2F5F7;--paper:#FFF;--sunk:#E7ECF0;
+  --ink:#131920;--ink-2:#3A4451;--muted:#606A77;--line:#DBE1E7;--line-2:#C3CBD4;
+  --accent:#0E5158;--accent-soft:#DFEDEE;--warn:#8A5A00;--warn-soft:#FBF2E1;
+  --sans:"IBM Plex Sans KR",-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --mono:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0C1116;--paper:#151B22;--sunk:#111820;
+  --ink:#E6EBF1;--ink-2:#BCC5D0;--muted:#8A94A1;--line:#232B35;--line-2:#333D49;
+  --accent:#57B5AB;--accent-soft:#102528;--warn:#D9A441;--warn-soft:#2A2113;}}
+:root[data-theme="dark"]{
+  --ground:#0C1116;--paper:#151B22;--sunk:#111820;
+  --ink:#E6EBF1;--ink-2:#BCC5D0;--muted:#8A94A1;--line:#232B35;--line-2:#333D49;
+  --accent:#57B5AB;--accent-soft:#102528;--warn:#D9A441;--warn-soft:#2A2113;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding-inline:16px;padding-block:0 60px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--ground);
+  border-bottom:1px solid var(--line);margin-inline:-16px;padding:11px 16px 0}
+.bar h1{font-size:16px;font-weight:700;margin:0 0 10px;letter-spacing:-.01em}
+.tabs{display:flex;gap:4px}
+.tab{font:500 14px var(--sans);padding:8px 16px;border:1px solid var(--line);border-bottom:none;
+  background:var(--sunk);color:var(--muted);border-radius:7px 7px 0 0;cursor:pointer}
+.tab.on{background:var(--paper);color:var(--accent);font-weight:600;
+  box-shadow:inset 0 2px 0 var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+h2{font-size:18px;font-weight:600;margin:32px 0 10px;letter-spacing:-.02em;
+  padding-bottom:7px;border-bottom:1px solid var(--line)}
+h3{font-size:15px;font-weight:600;margin:22px 0 8px;color:var(--accent)}
+p{margin:0 0 12px;color:var(--ink-2);max-width:64ch}
+p.note{background:var(--warn-soft);border:1px solid var(--line);border-left:3px solid var(--warn);
+  border-radius:6px;padding:12px 14px;font-size:13.5px;color:var(--ink-2)}
+code{font-family:var(--mono);font-size:12.5px;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.blk{position:relative;margin:0 0 14px}
+pre{font-family:var(--mono);font-size:12.5px;line-height:1.65;background:var(--paper);
+  border:1px solid var(--line);border-radius:7px;padding:40px 15px 15px;margin:0;
+  white-space:pre-wrap;word-break:break-word;color:var(--ink);overflow-x:auto}
+.cp{position:absolute;top:8px;right:8px;font:500 12px var(--sans);padding:5px 12px;
+  border:1px solid var(--line-2);border-radius:6px;background:var(--sunk);color:var(--ink-2);
+  cursor:pointer;z-index:1}
+.cp:hover{border-color:var(--accent);color:var(--accent)}
+.cp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cp.done{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<div class="wrap">
+  <div class="bar"><h1>판매 문구 덱</h1><div class="tabs"><button class="tab on" data-t="kmong" type="button">크몽</button><button class="tab" data-t="gumroad" type="button">Gumroad</button></div></div>
+  <div class="pane" id="p-kmong"><p class="note">크몽은 <b>용역(서비스) 마켓</b>이다. 전자책 카테고리는 PDF 20~30쪽을 전제로 해서 우리 제품(도구 파일)과 맞지 않는다. 그래서 <b>업무자동화</b> 카테고리에 &quot;도구 제공 + 내 파일에 맞춤 세팅&quot;이라는 서비스로 올린다. 이 구성은 컬럼 이름이 안 맞을 위험도 같이 해결한다.</p>
+<h2>서비스 제목</h2>
+<div class="blk"><button class="cp" type="button" data-i="1">복사</button><pre id="b1">스마트스토어·쿠팡 정산서에서 팔수록 손해인 상품 찾아드립니다</pre></div>
+<p>대안:</p>
+<div class="blk"><button class="cp" type="button" data-i="2">복사</button><pre id="b2">정산 엑셀 한 장으로 상품별 진짜 순이익 뽑아드립니다</pre></div>
+<h2>카테고리</h2>
+<p>업무자동화 &gt; 엑셀·데이터 자동화</p>
+<h2>패키지</h2>
+<h3>STANDARD — 49,000원 · 1일 · 수정 1회</h3>
+<div class="blk"><button class="cp" type="button" data-i="3">복사</button><pre id="b3">정산 손익 분석 도구 (단일 파일) + 사용 가이드
+
+· 설치·회원가입 없이 브라우저에서 바로 실행
+· 스마트스토어·쿠팡·11번가·지마켓 정산 파일 지원
+· 상품별 순이익/마진율, 적자 상품 자동 표시
+· 결과를 엑셀로 복사
+· 정산 파일 개수·행수 제한 없음</pre></div>
+<h3>DELUXE — 89,000원 · 2일 · 수정 2회</h3>
+<div class="blk"><button class="cp" type="button" data-i="4">복사</button><pre id="b4">STANDARD 전부 +
+
+· 보내주신 실제 정산 파일에 맞춰 컬럼 매핑 세팅
+· 상품별 원가표 초기 구축 (최대 100개 품목)
+· 첫 달 손익 리포트 1회 대신 뽑아 드림</pre></div>
+<h3>PREMIUM — 159,000원 · 4일 · 수정 3회</h3>
+<div class="blk"><button class="cp" type="button" data-i="5">복사</button><pre id="b5">DELUXE 전부 +
+
+· 마켓 3개까지 각각 맞춤 세팅
+· 원하시는 계산 항목 추가 (반품비, 포장비, 인건비 등)
+· 구매 후 30일간 질문 대응</pre></div>
+<h2>서비스 설명</h2>
+<h3>이런 분께 필요합니다</h3>
+<div class="blk"><button class="cp" type="button" data-i="6">복사</button><pre id="b6">· 정산금은 들어오는데 정작 얼마가 남는지 모르겠다
+· 상품이 늘어날수록 어떤 게 돈이 되는지 감이 안 온다
+· 광고비까지 넣어서 계산하면 남는 게 맞나 싶다
+· 매달 엑셀을 붙잡고 정산서를 정리하다 포기했다</pre></div>
+<h3>정산서는 얼마가 남는지 알려주지 않습니다</h3>
+<div class="blk"><button class="cp" type="button" data-i="7">복사</button><pre id="b7">정산서가 알려주는 건 &quot;얼마가 입금되는지&quot;까지입니다.
+그 돈에서 원가와 광고비를 빼면 실제로 얼마가 남는지,
+어떤 상품이 돈을 잃고 있는지는 알려주지 않습니다.
+
+예시로 만든 한 달 정산 데이터로 보면 이렇습니다.
+
+  매출              6,112,500원
+  − 수수료             420,131원
+  ─────────────────────────────
+  = 정산 입금액      5,692,369원   ← 통장에 찍히는 돈
+  − 매입 원가        3,317,300원
+  − 광고비             450,000원
+  ─────────────────────────────
+  = 실제 순이익      1,925,069원   ← 입금액의 33.8%
+
+전체 마진율 31.5%면 나쁘지 않아 보입니다.
+그런데 상품별로 쪼개보면 이 안에 팔수록 손해인 상품이 2개 있었습니다.
+
+  유기농 아몬드 1kg      −26,167원   (−6.0%)
+  실리콘 주방 집게 2p    −12,355원   (−6.3%)
+
+원가가 오르거나 광고비가 붙으면 마진은 조용히 음수로 넘어갑니다.
+총액만 봐서는 이 두 상품이 다른 상품이 번 돈을 갉아먹고 있다는 걸
+알 수 없습니다.</pre></div>
+<h3>무료 마진 계산기와 무엇이 다른가요</h3>
+<div class="blk"><button class="cp" type="button" data-i="8">복사</button><pre id="b8">무료 계산기는 상품 하나의 &quot;앞으로의 예상 마진&quot;을 손으로 입력해 계산합니다.
+이 도구는 &quot;이미 지나간 실제 정산 파일&quot; 수백~수천 행을 통째로 읽어,
+반품과 광고비까지 반영한 사후 손익을 상품별로 냅니다.
+
+계산하는 시점도, 대상도 다릅니다.</pre></div>
+<h3>정산 파일이 지저분해도 읽습니다</h3>
+<div class="blk"><button class="cp" type="button" data-i="9">복사</button><pre id="b9">마켓마다 정산 파일 모양이 다릅니다. 컬럼 이름을 고정해두면 바로 깨지기
+때문에, 까다로운 경우를 하나씩 처리하도록 만들었습니다.
+
+· 파일 위에 제목·조회기간 줄이 붙어 있어도 진짜 헤더를 찾습니다
+· 수수료 부호가 마켓마다 달라도 (스마트스토어는 +, 쿠팡은 −)
+  매출 부호와 대조해 자동으로 맞춥니다
+· 결제수수료·판매수수료·쿠폰분담금이 따로 있으면 모두 더합니다
+· 반품은 음수 행으로 인식해 매출·수수료·원가에서 함께 뺍니다
+· 39,900 / (1,234) / △500 / ₩12,000 처럼 글자로 저장된 숫자도 읽습니다
+· 맨 아래 합계·소계 줄을 상품으로 세지 않습니다</pre></div>
+<h3>정산 파일을 보내지 않으셔도 됩니다</h3>
+<div class="blk"><button class="cp" type="button" data-i="10">복사</button><pre id="b10">STANDARD는 도구만 받아 직접 쓰시는 구성입니다.
+도구에는 서버가 없어서 정산 파일이 어디로도 전송되지 않습니다.
+계산은 전부 브라우저 안에서 끝나고, 인터넷을 끊어도 동작합니다.
+
+정산 파일에는 한 달 매출이 전부 담겨 있습니다.
+그게 불편하신 분이 많아서 이렇게 만들었습니다.
+
+DELUXE 이상에서 맞춤 세팅을 원하시는 경우에만 파일이 필요하고,
+그때도 상품명과 금액을 지운 파일로 진행하실 수 있습니다.</pre></div>
+<h3>진행 방식</h3>
+<div class="blk"><button class="cp" type="button" data-i="11">복사</button><pre id="b11">STANDARD
+  1. 결제해 주시면 도구 파일과 가이드를 보내드립니다
+  2. 파일을 열어 정산 엑셀을 끌어다 놓으면 끝입니다
+
+DELUXE / PREMIUM
+  1. 결제 후 정산 파일 샘플을 보내주세요 (금액은 지우셔도 됩니다)
+  2. 컬럼 매핑을 맞춰 세팅한 도구를 보내드립니다
+  3. 원가표를 함께 만들고, 첫 리포트를 뽑아 확인해 드립니다</pre></div>
+<h3>이건 못 합니다</h3>
+<div class="blk"><button class="cp" type="button" data-i="12">복사</button><pre id="b12">살 만한 물건인지 판단하시라고, 못 하는 것도 적어둡니다.
+
+· 세무 신고용이 아닙니다. 부가세·배송비·재고 평가는 계산에 넣지 않습니다.
+  손익을 빠르게 파악하는 용도입니다.
+· 매입원가는 직접 넣으셔야 합니다. 정산 파일에 없는 정보라
+  자동으로 알 수 없습니다.
+· 광고비는 상품별 매출 비중으로 배분합니다.
+  상품별 실제 집행 내역이 있다면 그쪽이 더 정확합니다.
+· 마켓이 정산 양식을 바꾸면 컬럼을 다시 지정해야 할 수 있습니다.
+  화면에서 바로 바꿀 수 있게 해뒀습니다.</pre></div>
+<h2>FAQ</h2>
+<div class="blk"><button class="cp" type="button" data-i="13">복사</button><pre id="b13">Q. 엑셀을 잘 몰라도 쓸 수 있나요?
+A. 마켓에서 받은 정산 파일을 그대로 끌어다 놓으면 됩니다.
+   수식을 쓰거나 표를 만들 필요는 없습니다. 직접 넣으실 값은
+   상품별 매입원가와 그 달 광고비 총액뿐입니다.
+
+Q. 정산 파일이 어디로 전송되나요?
+A. 전송되지 않습니다. 서버가 없어서 보낼 곳도 없습니다.
+   인터넷을 끊고 써보셔도 똑같이 동작합니다.
+
+Q. 여러 마켓을 함께 볼 수 있나요?
+A. 현재는 파일 하나씩 분석합니다. 스마트스토어와 쿠팡을 각각 넣어
+   따로 보는 방식입니다. 합산 기능은 준비 중입니다.
+
+Q. 원가를 매번 다시 입력해야 하나요?
+A. 아니요. 한 번 넣으면 쓰시던 브라우저에 저장됩니다.
+   다만 같은 브라우저에서만 유지되니 컴퓨터를 바꾸면 다시 넣으셔야 합니다.
+
+Q. 결과를 엑셀로 옮길 수 있나요?
+A. 표 복사 버튼을 누르면 엑셀·구글 시트에 바로 붙여넣을 수 있습니다.
+
+Q. 계산이 정확한지 어떻게 믿나요?
+A. 계산 로직은 화면과 분리해 두고, 별도로 계산한 정답과 대조하는
+   검증을 거칩니다. 스마트스토어형·쿠팡형 두 가지 정산 파일에서
+   상품별 수량·매출·수수료·원가·순이익이 모두 일치하는지 확인합니다.
+   그래도 첫 달은 기존 방식과 나란히 놓고 비교해보시길 권합니다.
+
+Q. 맥에서도 되나요?
+A. 됩니다. 크롬·사파리·엣지 등 브라우저만 있으면 운영체제와 무관합니다.</pre></div>
+<h2>결제 후 안내 메시지</h2>
+<div class="blk"><button class="cp" type="button" data-i="14">복사</button><pre id="b14">구매해 주셔서 감사합니다.
+
+첨부된 파일을 내려받아 더블클릭하면 브라우저에서 바로 열립니다.
+설치할 것은 없습니다.
+
+처음 여시면 예시 데이터가 들어있어 어떻게 동작하는지 먼저 보실 수 있습니다.
+확인하신 뒤 &quot;파일 선택&quot;으로 실제 정산 파일을 넣으시면 됩니다.
+
+첫 실행 순서
+  1. 정산 엑셀을 끌어다 놓기
+  2. 컬럼이 맞게 잡혔는지 확인 (틀리면 선택해서 변경)
+  3. 상품별 매입원가 입력 — 한 번만 넣으면 기억됩니다
+  4. 그 달 광고비 총액 입력
+
+컬럼이 자동으로 안 잡히거나 숫자가 이상하면 메시지 주세요.
+정산 양식은 마켓마다 달라서, 알려주시면 바로 맞춰 드립니다.</pre></div>
+<h2>미리보기 이미지 (최소 5장, 본문 4장 이상)</h2>
+<p>1. 표지 — 헤드라인 &quot;통장에 5,692,369원. 실제로 번 돈은 1,925,069원&quot; 2. 영수증 — 매출에서 순이익까지 차감 과정 3. 적자 상품 — 손해 보는 상품 2개가 빨갛게 잡힌 화면 4. 상품별 손익 차트 — 흑자/적자가 갈리는 막대 5. 상세 표 — 상품별 수량·매출·수수료·원가·순이익</p></div><div class="pane" id="p-gumroad" hidden><p class="note"><b>먼저 알아두실 것:</b> Gumroad에는 한국 오픈마켓 셀러 이용자가 사실상 없다. 검색 유입은 영어권 위주라, 이 제품이 Gumroad 안에서 저절로 발견될 일은 없다. <b>Gumroad는 결제·배송 파이프로 쓰고, 유입은 직접 만들어야 한다.</b> 그래서 본문은 한국어로 쓰되, 검색·분류용 필드만 영어를 함께 넣는다. 근거: 조사에 따르면 설명이 5,000자 이상인 제품이 500자 미만보다 매출 20배, 커버 이미지 2~3장이 있는 제품이 없는 제품보다 매출 15배. 그래서 길게 쓴다.</p>
+<h2>제품명</h2>
+<p>라벨이 아니라 헤드라인으로 쓴다.</p>
+<div class="blk"><button class="cp" type="button" data-i="1">복사</button><pre id="b1">정산 엑스레이 — 스마트스토어·쿠팡 정산서에서 팔수록 손해인 상품을 찾아내는 도구</pre></div>
+<p>영문 병기 (검색·URL용):</p>
+<div class="blk"><button class="cp" type="button" data-i="2">복사</button><pre id="b2">Settlement X-Ray — Find Money-Losing Products in Your Korean Marketplace Payouts</pre></div>
+<p>URL 슬러그: <code>settlement-xray</code></p>
+<h2>가격</h2>
+<div class="blk"><button class="cp" type="button" data-i="3">복사</button><pre id="b3">49,000원 (약 $35)</pre></div>
+<p>조사상 Gumroad 최적 구간은 $30–49다. 49,000원은 그 하단에 들어간다.</p>
+<h2>요약 한 줄 (Summary)</h2>
+<div class="blk"><button class="cp" type="button" data-i="4">복사</button><pre id="b4">정산 엑셀을 넣으면 상품별 실제 순이익과 적자 상품을 찾아줍니다.
+설치·회원가입·업로드 없이 브라우저 안에서만 계산합니다.</pre></div>
+<h2>상세 설명</h2>
+<div class="blk"><button class="cp" type="button" data-i="5">복사</button><pre id="b5">## 통장에 5,692,369원이 들어왔습니다. 실제로 번 돈은 1,925,069원입니다.
+
+정산서가 알려주는 건 &quot;얼마가 입금되는지&quot;까지입니다.
+그 돈에서 원가와 광고비를 빼면 실제로 얼마가 남는지,
+어떤 상품이 돈을 잃고 있는지는 알려주지 않습니다.
+
+예시로 만든 한 달치 정산 데이터를 넣어본 결과입니다.
+
+  매출              6,112,500원
+  − 수수료             420,131원
+  ─────────────────────────────
+  = 정산 입금액      5,692,369원   ← 통장에 찍히는 돈
+  − 매입 원가        3,317,300원
+  − 광고비             450,000원
+  ─────────────────────────────
+  = 실제 순이익      1,925,069원   ← 입금액의 33.8%
+
+입금액의 3분의 1만 실제 이익입니다.
+그리고 이 안에는 팔수록 손해인 상품이 2개 숨어 있었습니다.
+
+
+## 팔수록 손해인 상품은 티가 안 납니다
+
+전체 마진율이 31.5%면 괜찮아 보입니다.
+하지만 상품별로 쪼개보면 이야기가 달라집니다.
+
+  유기농 아몬드 1kg      −26,167원   (−6.0%)
+  실리콘 주방 집게 2p    −12,355원   (−6.3%)
+
+원가가 오르거나 광고비가 붙으면 마진은 조용히 음수로 넘어갑니다.
+정산서 총액만 봐서는 이 두 상품이 다른 상품이 번 돈을
+갉아먹고 있다는 걸 알 수 없습니다.
+
+이 도구는 그 두 개를 찾아줍니다.
+
+
+## 이런 분께 필요합니다
+
+· 정산금은 들어오는데 정작 얼마가 남는지 모르겠다
+· 상품이 늘어날수록 어떤 게 돈이 되는지 감이 안 온다
+· 광고비까지 넣어서 계산하면 남는 게 맞나 싶다
+· 매달 엑셀을 붙잡고 정산서를 정리하다 포기했다
+· 매출 자료를 외부 서비스에 연동하기가 꺼려진다
+
+
+## 쓰는 법은 네 단계입니다
+
+1. 정산 엑셀을 끌어다 놓습니다
+   스마트스토어·쿠팡·11번가·지마켓. 받은 파일 그대로 넣으면 됩니다.
+
+2. 컬럼을 자동으로 잡습니다
+   상품명·수량·매출·수수료 위치를 알아서 찾습니다.
+   틀리면 화면에서 직접 바꿀 수 있습니다.
+
+3. 원가와 광고비를 넣습니다
+   상품별 매입가는 한 번만 넣으면 브라우저에 기억됩니다.
+
+4. 상품별 손익이 나옵니다
+   적자 상품이 먼저 보이고, 표는 엑셀에 그대로 붙여넣을 수 있습니다.
+
+
+## 무료 마진 계산기와 무엇이 다른가요
+
+무료 계산기는 상품 하나의 &quot;앞으로의 예상 마진&quot;을 손으로 입력해 계산합니다.
+이 도구는 &quot;이미 지나간 실제 정산 파일&quot; 수백~수천 행을 통째로 읽어,
+반품과 광고비까지 반영한 사후 손익을 상품별로 냅니다.
+
+계산하는 시점도, 대상도, 규모도 다릅니다.
+
+
+## 연동형 정산 서비스와 무엇이 다른가요
+
+                  연동형 서비스        정산 엑스레이
+  계정 연동          필수                불필요
+  매출 자료          서버로 전송          기기 밖으로 안 나감
+  비용               월 구독             1회 구매
+  쓰는 방식          계정 연결 후 대기    파일 넣으면 즉시
+
+정산 파일에는 한 달 매출이 전부 담겨 있습니다.
+그래서 이 도구에는 서버가 없습니다.
+계산은 전부 브라우저 안에서 끝나고, 인터넷을 끊어도 동작합니다.
+
+
+## 정산 파일이 지저분해도 읽습니다
+
+마켓마다 정산 파일 모양이 다릅니다.
+컬럼 이름을 고정해두면 바로 깨지기 때문에,
+까다로운 경우를 하나씩 처리하도록 만들었습니다.
+
+· 파일 위에 제목·조회기간 줄이 붙어 있어도 진짜 헤더를 찾습니다
+· 수수료 부호가 마켓마다 달라도 자동으로 맞춥니다
+  (스마트스토어는 양수, 쿠팡은 음수로 적습니다)
+· 결제수수료·판매수수료·쿠폰분담금이 따로 있으면 모두 더합니다
+· 반품은 음수 행으로 인식해 매출·수수료·원가에서 함께 뺍니다
+· 39,900 / (1,234) / △500 / ₩12,000 처럼 글자로 저장된 숫자도 읽습니다
+· 맨 아래 합계·소계 줄을 상품으로 세지 않습니다
+
+
+## 받으시는 것
+
+· 도구 파일 1개 (HTML, 더블클릭하면 브라우저에서 열립니다)
+· 사용 가이드
+· 업데이트 무료
+
+설치할 것이 없습니다. 회원가입도 없습니다.
+파일을 내 컴퓨터에 두고 쓰시면 됩니다.
+월 구독료가 없어서 다음 달에도, 내년에도 그대로 씁니다.
+
+
+## 계산식
+
+  순이익 = 매출 − 수수료 − 원가 − 광고비
+
+단순합니다. 어려운 건 계산이 아니라,
+마켓마다 다른 정산 파일에서 이 네 숫자를 정확히 꺼내오는 일입니다.
+
+
+## 계산 과정을 전부 공개합니다
+
+숨기는 계산이 없습니다. 위 예시에서 적자로 잡힌 상품 하나를 끝까지 보여드립니다.
+
+  유기농 아몬드 1kg
+
+  판매 수량               19개
+  매출                435,100원   (반품분 이미 차감됨)
+  − 수수료             30,235원   (결제수수료 + 판매수수료 + 쿠폰분담금)
+  − 매입 원가         399,000원   (21,000원 × 19개)
+  − 광고비 배분        32,032원   (전체 광고비 450,000원 중 매출 비중만큼)
+  ───────────────────────────────
+  = 순이익            −26,167원   마진율 −6.0%
+
+원가가 21,000원인데 판매가가 22,900원입니다.
+수수료와 광고비까지 붙으면 팔 때마다 손해입니다.
+
+같은 달, 같은 정산서에 있던 다른 상품은 이렇습니다.
+
+  캠핑용 폴딩 의자
+
+  판매 수량               34개
+  매출              1,560,600원
+  − 수수료            106,716원
+  − 매입 원가         952,000원
+  − 광고비 배분       114,891원
+  ───────────────────────────────
+  = 순이익            386,993원   마진율 24.8%
+
+두 상품이 한 정산서에 섞여 있으면 총액으로는 구분되지 않습니다.
+상품별로 쪼개야 보입니다.
+
+
+## 첫 달에는 이렇게 써보세요
+
+처음 쓰실 때 30분이면 끝나는 순서입니다.
+
+  1. 지난달 정산 파일을 마켓에서 내려받습니다
+     스마트스토어: 정산관리 &gt; 정산내역 &gt; 다운로드
+     쿠팡: 정산 &gt; 매출내역 &gt; 엑셀 받기
+
+  2. 도구에 끌어다 놓고 컬럼이 맞게 잡혔는지 봅니다
+     상품명·수량·매출·수수료 네 가지만 맞으면 됩니다
+
+  3. 상품별 매입원가를 넣습니다
+     이게 제일 오래 걸립니다. 하지만 한 번만 하면 됩니다.
+     품목이 많으면 매출 상위 20개만 먼저 넣어도 큰 그림이 나옵니다
+
+  4. 그 달 광고비 총액을 넣습니다
+     광고 관리 화면의 그 달 집행액 합계면 됩니다
+
+  5. 적자 상품부터 봅니다
+     빨간색으로 먼저 올라옵니다. 그 상품들만 손봐도 효과가 큽니다
+
+다음 달부터는 원가가 저장돼 있어서, 파일 넣고 광고비만 고치면
+1분 안에 끝납니다.
+
+
+## 적자 상품을 찾은 다음에 할 수 있는 것
+
+도구는 문제를 찾아줄 뿐이고, 결정은 사장님이 하십니다.
+보통 이 네 가지 중 하나입니다.
+
+  · 가격을 올린다
+  · 매입처를 바꾸거나 매입 단가를 다시 협상한다
+  · 그 상품 광고를 끈다 (광고비만 빠져도 흑자로 도는 경우가 많습니다)
+  · 판매를 접고 재고를 정리한다
+
+어느 쪽이든, 그 상품이 적자라는 걸 모르면 시작할 수 없습니다.
+
+
+## 이건 못 합니다
+
+살 만한 물건인지 판단하시라고, 못 하는 것도 적어둡니다.
+
+· 세무 신고용이 아닙니다.
+  부가세·배송비·재고 평가는 계산에 넣지 않습니다.
+  손익을 빠르게 파악하는 용도입니다.
+· 매입원가는 직접 넣으셔야 합니다.
+  정산 파일에 없는 정보라 자동으로 알 수 없습니다.
+· 광고비는 상품별 매출 비중으로 배분합니다.
+  상품별 실제 집행 내역이 있다면 그쪽이 더 정확합니다.
+· 여러 마켓 합산은 아직 안 됩니다. 파일 하나씩 분석합니다.
+· 마켓이 정산 양식을 바꾸면 컬럼을 다시 지정해야 할 수 있습니다.
+  화면에서 바로 바꿀 수 있게 해뒀습니다.
+
+
+## 환불
+
+받아보시고 내 정산 파일에 안 맞으면, 7일 안에 말씀만 주세요.
+이유를 묻지 않고 전액 환불해 드립니다.
+
+정산 양식은 마켓마다 다르고, 제가 모든 경우를 다 겪어보지는 못했습니다.
+그 위험을 사시는 분이 지는 건 맞지 않다고 생각합니다.
+
+
+## 자주 묻는 것
+
+Q. 엑셀을 잘 몰라도 쓸 수 있나요?
+A. 마켓에서 받은 정산 파일을 그대로 끌어다 놓으면 됩니다.
+   수식을 쓰거나 표를 만들 필요는 없습니다.
+   직접 넣으실 값은 상품별 매입원가와 그 달 광고비 총액뿐입니다.
+
+Q. 정산 파일이 어디로 전송되나요?
+A. 전송되지 않습니다. 서버가 없어서 보낼 곳도 없습니다.
+   파일을 넣는 순간부터 계산이 끝날 때까지 전부 브라우저 안에서
+   처리됩니다. 인터넷 연결을 끊고 써보셔도 똑같이 동작합니다.
+
+Q. 맥에서도 되나요?
+A. 됩니다. 크롬·사파리·엣지 등 브라우저만 있으면
+   운영체제와 상관없이 동작합니다.
+
+Q. 원가를 매번 다시 입력해야 하나요?
+A. 아니요. 한 번 넣으면 쓰시던 브라우저에 저장돼
+   다음에 열 때 그대로 있습니다.
+   다만 같은 브라우저에서만 유지되므로 컴퓨터를 바꾸면 다시 넣으셔야 합니다.
+
+Q. 정산 파일이 몇 천 행인데 괜찮나요?
+A. 괜찮습니다. 행수 제한이 없습니다.
+
+Q. 결과를 엑셀로 옮길 수 있나요?
+A. 표 복사 버튼을 누르면 엑셀·구글 시트에
+   바로 붙여넣을 수 있는 형태로 복사됩니다.
+
+Q. 계산이 정확한지 어떻게 믿나요?
+A. 계산 로직은 화면과 분리해 두고,
+   별도로 계산한 정답과 대조하는 검증을 거칩니다.
+   스마트스토어형·쿠팡형 두 가지 정산 파일에서 상품별
+   수량·매출·수수료·원가·순이익이 모두 일치하는지 확인합니다.
+   그래도 첫 달은 기존 방식과 나란히 놓고 비교해보시길 권합니다.
+
+Q. 업데이트는 어떻게 받나요?
+A. Gumroad 구매 내역에서 최신 파일을 다시 내려받으시면 됩니다.
+   추가 비용은 없습니다.
+
+
+## 화면의 숫자에 대하여
+
+이 페이지의 모든 숫자는 공개된 수수료 구조로 만든 예시 정산 데이터를
+실제 계산 로직에 통과시켜 얻은 결과입니다.
+실제 판매 데이터가 아니며, 그대로 표시해 둡니다.</pre></div>
+<h2>태그</h2>
+<div class="blk"><button class="cp" type="button" data-i="6">복사</button><pre id="b6">스마트스토어, 쿠팡, 오픈마켓, 정산, 손익계산, 셀러, 이커머스, 엑셀,
+마진계산, 업무자동화</pre></div>
+<p>영문 병기: <code>korean-ecommerce, smartstore, coupang, settlement, profit-analysis, seller-tools</code></p>
+<h2>커버 이미지 3장</h2>
+<p>조사상 커버 2~3장이 있으면 매출이 크게 갈린다. 반드시 넣는다.</p>
+<p>1. <b>표지</b> — &quot;통장에 5,692,369원. 실제로 번 돈은 1,925,069원&quot; 헤드라인 2. <b>적자 상품 화면</b> — 손해 보는 상품 2개가 빨갛게 잡힌 결과 화면 3. <b>상품별 손익 차트</b> — 흑자/적자가 좌우로 갈리는 막대</p>
+<h2>결제 후 안내 (Receipt note)</h2>
+<div class="blk"><button class="cp" type="button" data-i="7">복사</button><pre id="b7">구매해 주셔서 감사합니다.
+
+내려받은 파일을 더블클릭하면 브라우저에서 바로 열립니다.
+설치할 것은 없습니다.
+
+처음 여시면 예시 데이터가 들어있어 어떻게 동작하는지 먼저 보실 수 있습니다.
+확인하신 뒤 &quot;파일 선택&quot;으로 실제 정산 파일을 넣으시면 됩니다.
+
+컬럼이 자동으로 안 잡히거나 숫자가 이상하면 알려주세요.
+정산 양식은 마켓마다 달라서, 알려주시면 맞춰 드립니다.
+7일 안에는 이유를 묻지 않고 환불해 드립니다.</pre></div></div>
+</div>
+<script>
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  document.querySelectorAll(".pane").forEach(p => p.hidden = p.id !== "p-" + t.dataset.t);
+  window.scrollTo({top: 0});
+});
+document.querySelectorAll(".cp").forEach(b => b.onclick = async () => {
+  const text = document.getElementById("b" + b.dataset.i).textContent;
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const r = document.createRange();
+    r.selectNodeContents(document.getElementById("b" + b.dataset.i));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    b.textContent = "선택됨"; setTimeout(() => b.textContent = "복사", 2000); return;
+  }
+  b.textContent = "복사함"; b.classList.add("done");
+  setTimeout(() => { b.textContent = "복사"; b.classList.remove("done"); }, 1800);
+});
+</script>
