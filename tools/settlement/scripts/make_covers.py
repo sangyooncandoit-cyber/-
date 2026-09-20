@@ -20,7 +20,7 @@ BUILD = OUT / "_html"
 D = json.loads((OUT / "data.json").read_text(encoding="utf-8"))
 ITEMS, T = D["items"], D["total"]
 
-FONTS = Path("/tmp/claude-0/-home-user--/f3ee751f-f072-52fb-87c6-a6b16558e8df/scratchpad/fonts")
+FONTS = Path("/tmp/claude-0/-home-user--/f3ee751f-f072-52fb-87c6-a6b16558e8df/scratchpad/fonts2")
 
 RATIOS = {"43": (800, 600), "169": (640, 360), "sq": (300, 300)}
 
@@ -40,15 +40,13 @@ def face(fam, weight, files):
 
 
 FONTCSS = "\n".join([
-    face("PlexKR", 400, ["ibm-plex-sans-kr-korean-400-normal.woff2",
-                         "ibm-plex-sans-kr-latin-400-normal.woff2"]),
-    face("PlexKR", 600, ["ibm-plex-sans-kr-korean-600-normal.woff2",
-                         "ibm-plex-sans-kr-latin-600-normal.woff2"]),
-    face("PlexKR", 700, ["ibm-plex-sans-kr-korean-700-normal.woff2",
-                         "ibm-plex-sans-kr-latin-700-normal.woff2"]),
-    face("PlexMono", 400, ["ibm-plex-mono-latin-400-normal.woff2"]),
-    face("PlexMono", 500, ["ibm-plex-mono-latin-500-normal.woff2"]),
-    face("PlexMono", 600, ["ibm-plex-mono-latin-600-normal.woff2"]),
+    face("GothicA1", 400, ["gothic-a1-korean-400-normal.woff2", "gothic-a1-latin-400-normal.woff2"]),
+    face("GothicA1", 500, ["gothic-a1-korean-500-normal.woff2", "gothic-a1-latin-500-normal.woff2"]),
+    face("GothicA1", 700, ["gothic-a1-korean-700-normal.woff2", "gothic-a1-latin-700-normal.woff2"]),
+    face("Myeongjo", 700, ["nanum-myeongjo-korean-700-normal.woff2",
+                           "nanum-myeongjo-latin-700-normal.woff2"]),
+    face("Myeongjo", 800, ["nanum-myeongjo-korean-800-normal.woff2",
+                           "nanum-myeongjo-latin-800-normal.woff2"]),
 ])
 
 # 라이트 모드 팔레트 — 검증 통과분 (흑자 #0B7A4B / 적자 #C42B1C)
@@ -56,86 +54,83 @@ CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
 html{font-size:calc(var(--w)/100)}
 body{width:var(--w);height:var(--h);overflow:hidden;
-  font-family:PlexKR,sans-serif;color:#131920;background:#F2F5F7;
-  -webkit-font-smoothing:antialiased;font-feature-settings:"tnum"}
-.c{width:100%;height:100%;padding:7rem 7.5rem 13.5rem;display:flex;flex-direction:column;
-  position:relative;background:#F2F5F7}
-.c.dark{background:#0E4F58;color:#fff}
+  font-family:GothicA1,sans-serif;color:#16171A;background:#FBFAF6;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.c{width:100%;height:100%;padding:7rem 7.5rem 12.5rem;display:flex;flex-direction:column;
+  position:relative;background:#FBFAF6}
+.c.dark{background:#1C1D21;color:#F2F1EC}
 .c.sq{padding:8rem 7.5rem;justify-content:space-between}
-.eyebrow{font:600 1.9rem/1 PlexMono,monospace;letter-spacing:.06em;
-  color:#0E5158;margin-bottom:3.4rem}
-.dark .eyebrow{color:#8FD6CD}
-h1{font-weight:700;letter-spacing:-.035em;line-height:1.24}
-.mono{font-family:PlexMono,monospace;font-variant-numeric:tabular-nums}
-.title{font:600 3.5rem/1.35 PlexKR;letter-spacing:-.03em;margin-bottom:1.1rem}
-.sub{font:400 2.2rem/1.5 PlexKR;color:#5F6A77;margin-bottom:3.6rem}
-.dark .sub{color:#B9DCD9}
-.brand{position:absolute;left:7.5rem;right:7.5rem;bottom:4.4rem;display:flex;
-  align-items:center;justify-content:space-between;
-  border-top:1px solid #D9E0E6;padding-top:2.4rem;
-  font:500 1.85rem/1 PlexKR;color:#5F6A77}
-.dark .brand{border-color:rgba(255,255,255,.22);color:#B9DCD9}
-.brand b{font-weight:700;color:#0E5158;letter-spacing:-.01em}
-.dark .brand b{color:#fff}
+.eyebrow{font:700 1.95rem/1 GothicA1;letter-spacing:.06em;color:#A8242B;margin-bottom:3.2rem}
+.dark .eyebrow{color:#E8868B}
+h1{font-family:Myeongjo,serif;font-weight:800;letter-spacing:-.022em;line-height:1.36;
+  word-break:keep-all}
+.title{font-family:Myeongjo,serif;font-weight:700;font-size:3.7rem;line-height:1.4;
+  letter-spacing:-.018em;margin-bottom:1.3rem;word-break:keep-all}
+.sub{font:400 2.15rem/1.6 GothicA1;color:#63666C;margin-bottom:3.4rem;word-break:keep-all}
+.dark .sub{color:#B4B3AC}
 .fill{flex:1;min-height:0}
 .main{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
 .pos{color:#0B7A4B} .neg{color:#C42B1C}
-.dark .pos{color:#7BE0B4}
+.dark .pos{color:#5FD3A3}
+.brand{position:absolute;left:7.5rem;right:7.5rem;bottom:5.2rem;display:flex;
+  align-items:baseline;justify-content:space-between;gap:2rem;
+  border-top:.28rem solid #16171A;padding-top:2.2rem;
+  font:400 1.9rem/1 GothicA1;color:#63666C}
+.dark .brand{border-color:#F2F1EC;color:#B4B3AC}
+.brand b{font-weight:700;color:#16171A;letter-spacing:-.01em}
+.dark .brand b{color:#F2F1EC}
 
 /* 영수증 */
-.rc{background:#fff;border:1px solid #DBE1E7;border-radius:.5rem;padding:3.8rem 4rem}
-.rl{display:flex;align-items:baseline;gap:1.6rem;padding:1.05rem 0;
-  font:400 2.25rem/1 PlexMono,monospace}
-.rl .lb{color:#3A4451;white-space:nowrap;font-family:PlexKR;font-weight:400}
-.rl .dt{flex:1;border-bottom:.13rem dotted #C3CBD4;transform:translateY(-.55rem)}
-.rl .am{white-space:nowrap;font-variant-numeric:tabular-nums}
-.rl.ded .lb,.rl.ded .am{color:#6A7480}
-.rl.mid{border-top:.13rem solid #DBE1E7;margin-top:.9rem;padding-top:1.7rem}
-.rl.mid .lb,.rl.mid .am{color:#131920;font-weight:600}
-.rl.tot{border-top:.22rem solid #131920;margin-top:1.5rem;padding-top:2.2rem;align-items:flex-end}
-.rl.tot .lb{font-weight:600;font-size:2.1rem}
-.rl.tot .am{font-size:4.6rem;font-weight:600;letter-spacing:-.035em}
+.rc{background:#F1F0EA;border-top:.28rem solid #16171A;border-bottom:.28rem solid #16171A;
+  padding:3.2rem 3.4rem 2.8rem}
+.rl{display:flex;align-items:baseline;gap:1.6rem;padding:1.05rem 0;font:400 2.25rem/1 GothicA1}
+.rl .lb{color:#44464B;white-space:nowrap}
+.rl .dt{flex:1;border-bottom:.13rem dotted #C3C2B9;transform:translateY(-.55rem)}
+.rl .am{white-space:nowrap;font-weight:500}
+.rl.ded .lb,.rl.ded .am{color:#7A7D83}
+.rl.mid{border-top:.13rem solid #CBCAC1;margin-top:.9rem;padding-top:1.7rem}
+.rl.mid .lb,.rl.mid .am{color:#16171A;font-weight:700}
+.rl.tot{border-top:.22rem solid #16171A;margin-top:1.4rem;padding-top:2.1rem;align-items:flex-end}
+.rl.tot .lb{font-weight:700;font-size:2.1rem;color:#16171A}
+.rl.tot .am{font-family:Myeongjo,serif;font-size:4.8rem;font-weight:800;letter-spacing:-.03em}
 
-/* 적자 카드 */
-.loss{display:flex;flex-direction:column;gap:1.7rem}
-.lcard{display:flex;align-items:center;gap:2.4rem;background:#fff;border:1px solid #DBE1E7;
-  border-left:.62rem solid #C42B1C;border-radius:.55rem;padding:2.9rem 3.2rem}
-.lcard .n{flex:1;font:600 2.7rem/1.3 PlexKR;letter-spacing:-.02em;min-width:0;
+/* 적자 발췌 */
+.loss{border-top:.28rem solid #16171A}
+.lcard{display:flex;align-items:baseline;gap:2.4rem;padding:2.6rem .4rem;
+  border-bottom:.13rem solid #DEDDD5}
+.lcard .n{flex:1;font:500 2.7rem/1.3 GothicA1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lcard .v{font:600 3.1rem/1 PlexMono,monospace;color:#C42B1C;white-space:nowrap;
-  font-variant-numeric:tabular-nums}
-.lcard .m{font:500 2rem/1 PlexMono,monospace;color:#6A7480;width:8.5rem;text-align:right}
+.lcard .v{font:700 3.1rem/1 GothicA1;color:#C42B1C;white-space:nowrap}
+.lcard .m{font:400 2rem/1 GothicA1;color:#7A7D83;width:8.5rem;text-align:right}
 
 /* 발산 막대 */
 .bars{display:flex;flex-direction:column;gap:1.15rem}
 .br{display:grid;grid-template-columns:24rem 1fr 13.5rem;gap:1.8rem;align-items:center}
-.br .bn{font:400 1.95rem/1.35 PlexKR;color:#3A4451;overflow:hidden;
+.br .bn{font:400 1.95rem/1.35 GothicA1;color:#44464B;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .track{position:relative;height:3.1rem}
 .track::before{content:"";position:absolute;left:var(--z);top:-.35rem;bottom:-.35rem;
-  width:.13rem;background:#C3CBD4}
+  width:.13rem;background:#C3C2B9}
 .bar{position:absolute;top:.35rem;height:2.4rem}
-.bar.p{background:#0B7A4B;border-radius:.16rem .5rem .5rem .16rem}
-.bar.l{background:#C42B1C;border-radius:.5rem .16rem .16rem .5rem}
-.br .bv{font:500 2rem/1 PlexMono,monospace;text-align:right;font-variant-numeric:tabular-nums}
-.legend{display:flex;gap:2.8rem;font:400 1.8rem/1 PlexKR;color:#5F6A77;margin-bottom:2.2rem}
-.legend i{display:inline-block;width:1.25rem;height:1.25rem;border-radius:.2rem;
-  margin-right:.75rem;vertical-align:-.1rem}
+.bar.p{background:#0B7A4B}
+.bar.l{background:#C42B1C}
+.br .bv{font:700 2rem/1 GothicA1;text-align:right}
+.legend{display:flex;gap:2.8rem;font:400 1.8rem/1 GothicA1;color:#63666C;margin-bottom:2.2rem}
+.legend i{display:inline-block;width:1.25rem;height:1.25rem;margin-right:.75rem;vertical-align:-.1rem}
 
 /* 표 */
-table{width:100%;border-collapse:collapse;background:#fff;table-layout:fixed;
-  border:1px solid #DBE1E7;border-radius:.5rem;overflow:hidden}
-th,td{padding:1.5rem 1.15rem;text-align:right;border-bottom:1px solid #E7ECF0;white-space:nowrap}
-th{background:#E7ECF0;font:600 1.6rem/1 PlexKR;color:#5F6A77;letter-spacing:.01em}
-td{font:500 1.82rem/1 PlexMono,monospace;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{padding:1.5rem 1.15rem;text-align:right;border-bottom:.13rem solid #DEDDD5;white-space:nowrap}
+th{font:700 1.6rem/1 GothicA1;color:#63666C;letter-spacing:.01em;
+  border-top:.28rem solid #16171A;border-bottom:.28rem solid #16171A}
+td{font:500 1.82rem/1 GothicA1}
 th.l,td.l{text-align:left;width:27%;overflow:hidden;text-overflow:ellipsis}
-td.l{font:500 1.88rem/1 PlexKR;letter-spacing:-.015em}
+td.l{font:400 1.88rem/1 GothicA1;letter-spacing:-.015em}
 th:not(.l),td:not(.l){width:12.2%}
 tbody tr:last-child td{border-bottom:none}
 tr.bad td.l::before{content:"▼ ";color:#C42B1C;font-size:1.5rem}
 tr.bad td.l{color:#C42B1C}
 """
-
 
 def page(body, w, h, cls=""):
     return (f"<!doctype html><html><head><meta charset='utf-8'><style>{FONTCSS}\n{CSS}\n"
@@ -151,12 +146,12 @@ def brand(tag="오픈마켓 정산 손익 분석"):
 def cover_title(w, h):
     body = f"""
     <span class="eyebrow">스마트스토어 · 쿠팡</span>
-    <h1 style="font-size:4.4rem;color:#B9DCD9;font-weight:600">
-      통장에 <span class="mono" style="color:#fff">{won(T['rev'] - T['fee'])}원</span>이 들어왔습니다.</h1>
-    <h1 style="font-size:6.6rem;margin-top:2.4rem">
-      실제로 번 돈은<br><span class="mono pos">{won(T['profit'])}원</span>입니다.</h1>
+    <h1 style="font-size:4.5rem;color:#B4B3AC;font-weight:700">
+      통장에 <span style="color:#F2F1EC">{won(T['rev'] - T['fee'])}원</span>이 들어왔습니다.</h1>
+    <h1 style="font-size:6.7rem;margin-top:2.2rem">
+      실제로 번 돈은<br><span class="pos">{won(T['profit'])}원</span>입니다.</h1>
     <div class="fill"></div>
-    <p style="font:400 2.3rem/1.6 PlexKR;color:#B9DCD9;max-width:76%">
+    <p style="font:400 2.3rem/1.65 GothicA1;color:#B4B3AC;max-width:78%">
       정산서는 얼마가 입금되는지까지만 알려줍니다.<br>
       어떤 상품이 돈을 잃고 있는지는 알려주지 않습니다.</p>
     {brand()}"""
@@ -169,7 +164,7 @@ def cover_square(w, h):
     <h1 style="font-size:5.6rem;color:#B9DCD9;font-weight:600;line-height:1.3">
       입금액의<br><span class="mono" style="color:#7BE0B4;font-size:8.5rem">33.8%</span><br>만 실제 이익입니다</h1>
     <div class="fill"></div>
-    <p style="font:400 3rem/1.5 PlexKR;color:#B9DCD9">
+    <p style="font:400 3rem/1.5 GothicA1;color:#B9DCD9">
       정산서에서<br>적자 상품을 찾아냅니다</p>"""
     return page(body, w, h, "dark")
 
@@ -207,7 +202,7 @@ def cover_losses(w, h):
     <h2 class="title">팔수록 손해인 상품은 티가 안 납니다</h2>
     <p class="sub">전체 마진율은 31.5%였습니다. 상품별로 쪼개자 이 둘이 나왔습니다.</p>
     <div class="main"><div class="loss">{cards}</div>
-      <p style="font:400 2.05rem/1.55 PlexKR;color:#5F6A77;max-width:82%;margin-top:3.4rem">
+      <p style="font:400 2.05rem/1.55 GothicA1;color:#5F6A77;max-width:82%;margin-top:3.4rem">
         원가가 오르거나 광고비가 붙으면 마진은 조용히 음수로 넘어갑니다.<br>
         총액만 봐서는 보이지 않습니다.</p></div>
     {brand("적자 상품 자동 표시")}"""
