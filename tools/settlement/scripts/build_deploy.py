@@ -16,8 +16,7 @@ PAGES = [
          desc="정산 엑셀을 넣으면 상품별 실제 순이익과 적자 상품이 나옵니다. "
               "설치도 가입도 없고, 정산 파일이 기기 밖으로 나가지 않습니다.",
          url=SITE + "/",
-         swap=[('const BUY_URL = "https://claude.ai/artifact/VbpN25f9Cpw3nUXdTYAM9H";',
-                'const BUY_URL = "pro/";')]),
+         swap=[(SITE + "/pro/", "pro/")]),
     dict(src=BASE / "landing" / "index.html", out="pro/index.html",
          title="통장에 찍힌 돈, 다 내 돈일까 — 정산 엑스레이",
          desc="정산 입금액의 33.8%만 실제 이익이었습니다. "

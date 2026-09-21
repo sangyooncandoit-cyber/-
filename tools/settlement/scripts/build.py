@@ -10,6 +10,9 @@ tpl = (BASE / "src" / "index.template.html").read_text(encoding="utf-8")
 core = (BASE / "src" / "core.js").read_text(encoding="utf-8")
 sample = (BASE / "src" / "sample_embed.json").read_text(encoding="utf-8")
 
+# 공개 사이트 주소. 여기 한 곳만 바꾸면 모든 판에 반영된다.
+SITE = "https://sangyooncandoit-cyber.github.io/settlement-xray"
+
 BUILDS = [
     ("index.html", "false", "정산 엑스레이"),
     ("lite.html",  "true",  "정산 엑스레이 Lite"),
@@ -39,15 +42,17 @@ def standalone(body: str) -> str:
 dist = BASE / "dist"
 dist.mkdir(exist_ok=True)
 
-def render(lite: str, title: str) -> str:
+def render(lite: str, title: str, buy_url: str = SITE + "/pro/") -> str:
     out = (tpl
            .replace("/*__CORE__*/", core)
            .replace("/*__SAMPLE__*/", sample)
            .replace("/*__LITE__*/", lite)
+           .replace("/*__BUY_URL__*/", buy_url)
            .replace("<title>정산 엑스레이</title>", f"<title>{title}</title>"))
-    for token in ("/*__CORE__*/", "/*__SAMPLE__*/", "/*__LITE__*/"):
+    for token in ("/*__CORE__*/", "/*__SAMPLE__*/", "/*__LITE__*/", "/*__BUY_URL__*/"):
         assert token not in out, f"{token} 치환 실패"
     assert f"<title>{title}</title>" in out, "제목 치환 실패"
+    assert "claude.ai" not in out, "claude.ai 참조가 남았다"
     return out
 
 

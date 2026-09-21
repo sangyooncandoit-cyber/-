@@ -155,7 +155,7 @@
 
 무료로 써보실 수 있게 해뒀습니다.
 
-[여기에 라이트판 링크]
+https://sangyooncandoit-cyber.github.io/settlement-xray/
 
 예시 데이터가 들어 있어서 눌러보시면 어떤 건지 바로 보입니다.
 
