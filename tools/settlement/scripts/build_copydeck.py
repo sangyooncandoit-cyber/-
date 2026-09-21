@@ -67,13 +67,12 @@ def inline(t: str) -> str:
 
 
 def render(blocks):
-    out, n = [], 0
+    out = []
     for kind, text in blocks:
         if kind == "code":
-            n += 1
             out.append(
-                f'<div class="blk"><button class="cp" type="button" data-i="{n}">복사</button>'
-                f'<pre id="b{n}">{html.escape(text)}</pre></div>')
+                '<div class="blk"><button class="cp" type="button">복사</button>'
+                f'<pre>{html.escape(text)}</pre></div>')
         elif kind == "h2":
             out.append(f"<h2>{inline(text)}</h2>")
         elif kind == "h3":
@@ -162,11 +161,11 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {{
   window.scrollTo({{top: 0}});
 }});
 document.querySelectorAll(".cp").forEach(b => b.onclick = async () => {{
-  const text = document.getElementById("b" + b.dataset.i).textContent;
-  try {{ await navigator.clipboard.writeText(text); }}
+  const pre = b.parentElement.querySelector("pre");
+  try {{ await navigator.clipboard.writeText(pre.textContent); }}
   catch {{
     const r = document.createRange();
-    r.selectNodeContents(document.getElementById("b" + b.dataset.i));
+    r.selectNodeContents(pre);
     const s = getSelection(); s.removeAllRanges(); s.addRange(r);
     b.textContent = "선택됨"; setTimeout(() => b.textContent = "복사", 2000); return;
   }}
