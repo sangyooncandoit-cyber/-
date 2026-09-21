@@ -90,5 +90,49 @@ console.log("\n── 숫자 파싱 ──");
   ok(X.num(inp) === exp, `num(${JSON.stringify(inp)}) = ${exp}`, `→ ${X.num(inp)}`);
 });
 
+/* 원가 일괄 입력 */
+console.log("\n── 원가 붙여넣기 파싱 ──");
+[["유기농 아몬드 1kg\t21,000", "유기농 아몬드 1kg", 21000, "엑셀 탭 구분"],
+ ["무선 이어폰, 15400",        "무선 이어폰",       15400, "쉼표 구분"],
+ ["실리콘 주방 집게 2p  4500", "실리콘 주방 집게 2p", 4500, "공백 + 끝자리 숫자"],
+ ["A\t₩12,000",               "A",                 12000, "원화 기호"],
+ ["B\t(1,234)",               "B",                 -1234, "괄호 음수"]].forEach(([line, nm, cost, label]) => {
+  const r = X.parseCostPaste(line);
+  ok(r.length === 1 && r[0].name === nm && r[0].cost === cost, label,
+     `→ ${JSON.stringify(r[0] || null)}`);
+});
+ok(X.parseCostPaste("상품명만있고숫자없음").length === 0, "숫자 없는 줄은 버린다");
+ok(X.parseCostPaste("\n\n  \n").length === 0, "빈 줄은 버린다");
+
+console.log("\n── 원가 이름 맞추기 ──");
+{
+  const names = ["유기농 아몬드 1kg", "캠핑용 폴딩 의자", "무선 이어폰",
+                 "실리콘 주방 집게 2p", "스텐 보온병 500ml"];
+  const r = X.matchCosts(X.parseCostPaste(
+    ["유기농 아몬드 1kg\t21000",
+     "[무료배송] 캠핑용 폴딩 의자\t28000",
+     "무선이어폰\t15400",
+     "보온병\t7000",
+     "집게\t4500",
+     "없는상품 XYZ\t9000"].join("\n")), names);
+
+  ok(r.costs["유기농 아몬드 1kg"] === 21000, "이름이 같으면 바로 반영");
+  ok(r.costs["캠핑용 폴딩 의자"] === 28000, "대괄호 수식어는 무시하고 같은 이름으로 본다");
+  ok(r.costs["무선 이어폰"] === 15400, "띄어쓰기 차이는 같은 이름으로 본다");
+  ok(Object.keys(r.costs).length === 3, "짐작으로 반영한 것이 없다",
+     `→ ${Object.keys(r.costs).length}개만 반영`);
+
+  const ask = r.ask.find(a => a.from === "보온병");
+  ok(ask && ask.to === "스텐 보온병 500ml", "줄여 적은 이름은 후보로 올려 되묻는다",
+     `→ ${ask ? ask.score.toFixed(2) : "없음"}`);
+  ok(!r.ask.some(a => a.to === "스텐 보온병 500ml" && a.from === "집게"),
+     "두 글자짜리는 아무데나 갖다 붙이지 않는다");
+  ok(r.miss.includes("없는상품 XYZ") && r.miss.includes("집게"),
+     "못 찾은 것은 못 찾았다고 돌려준다", `→ [${r.miss.join(", ")}]`);
+
+  const twice = X.matchCosts(X.parseCostPaste("무선이어폰\t15400\n무선 이어폰\t99999"), names);
+  ok(twice.costs["무선 이어폰"] === 99999, "같은 상품이 두 번 오면 나중 값이 이긴다");
+}
+
 console.log(`\n${fails ? "실패" : "통과"}: ${checks - fails}/${checks}`);
 process.exit(fails ? 1 : 0);

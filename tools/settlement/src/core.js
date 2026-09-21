@@ -118,8 +118,100 @@ function aggregate(rows, map, feeMul, costs, ad){
   return items;
 }
 
+/* ── 원가 일괄 입력 ─────────────────────────────────────────────
+   품목이 50개면 칸을 50번 채워야 했다. 거기서 대부분 포기한다.
+   엑셀에서 상품명과 원가 두 칸을 긁어 붙여넣게 한다. */
+
+/* 붙여넣은 텍스트를 {name, cost} 목록으로. 탭·쉼표·마지막 숫자 순으로 시도한다. */
+function parseCostPaste(text){
+  var out = [];
+  String(text == null ? "" : text).split(/\r?\n/).forEach(function(line){
+    if (!line.trim()) return;
+    var name = null, cost = null, m;
+    if (line.indexOf("\t") >= 0){
+      var t = line.split("\t").filter(function(x){ return x.trim() !== ""; });
+      if (t.length >= 2){ name = t[0]; cost = t[t.length - 1]; }
+    }
+    if (name == null && (m = line.match(/^(.*?),\s*([^,]+)$/))){
+      name = m[1]; cost = m[2];
+    }
+    if (name == null && (m = line.match(/^(.*?)[\s]+([0-9][0-9,.\u20a9()\u25b3-]*)$/))){
+      name = m[1]; cost = m[2];
+    }
+    if (name == null) return;
+    name = name.trim();
+    if (!name) return;
+    out.push({ name: name, cost: num(cost) });
+  });
+  return out;
+}
+
+function bigrams(s){
+  var g = [];
+  for (var i = 0; i + 1 < s.length; i++) g.push(s.slice(i, i + 2));
+  return g;
+}
+
+/* 두 이름의 닮은 정도 0~1. 한글은 형태 변화가 적어 바이그램이 잘 듣는다. */
+function similar(a, b){
+  a = norm(a); b = norm(b);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  var A = bigrams(a), B = bigrams(b);
+  if (!A.length || !B.length) return a === b ? 1 : 0;
+  var bag = {}, hit = 0;
+  A.forEach(function(g){ bag[g] = (bag[g] || 0) + 1; });
+  B.forEach(function(g){ if (bag[g] > 0){ bag[g]--; hit++; } });
+  var dice = 2 * hit / (A.length + B.length);
+
+  /* 원가표에는 "스텐 보온병 500ml"을 "보온병"이라고만 적어두는 일이 흔하다.
+     길이 차가 크면 바이그램 점수가 주저앉으므로, 한쪽이 다른 쪽에 통째로
+     들어 있으면 덮는 비율만큼 올려준다. 두 글자짜리는 아무데나 걸리므로 뺀다. */
+  var shortS = a.length <= b.length ? a : b, longS = a.length <= b.length ? b : a;
+  if (shortS.length >= 3 && longS.indexOf(shortS) >= 0){
+    dice = Math.max(dice, 0.55 + 0.45 * (shortS.length / longS.length));
+  }
+  return dice;
+}
+
+/* 붙여넣은 목록을 실제 상품명에 맞춘다.
+
+   이름이 똑같은 것만 바로 반영하고, 비슷하기만 한 것은 물어본다.
+   원가가 틀리면 손익이 통째로 틀리므로 짐작으로 넣지 않는다. */
+function matchCosts(pasted, names, opts){
+  opts = opts || {};
+  var floor = opts.floor == null ? 0.55 : opts.floor;   // 이 아래는 후보로도 안 본다
+  var gap   = opts.gap   == null ? 0.08 : opts.gap;     // 2등과 이만큼 벌어져야 후보
+  var costs = {}, ask = [], miss = [], taken = {};
+
+  pasted.forEach(function(row){
+    var exact = null;
+    for (var i = 0; i < names.length; i++){
+      if (norm(names[i]) === norm(row.name)){ exact = names[i]; break; }
+    }
+    if (exact != null){ costs[exact] = row.cost; taken[exact] = 1; return; }
+
+    var best = null, bestScore = 0, second = 0;
+    names.forEach(function(n){
+      if (taken[n]) return;
+      var sc = similar(row.name, n);
+      if (sc > bestScore){ second = bestScore; bestScore = sc; best = n; }
+      else if (sc > second) second = sc;
+    });
+
+    if (best != null && bestScore >= floor && bestScore - second >= gap){
+      ask.push({ from: row.name, to: best, cost: row.cost, score: bestScore });
+    } else {
+      miss.push(row.name);
+    }
+  });
+
+  return { costs: costs, ask: ask, miss: miss };
+}
+
 var API = { ALIAS: ALIAS, norm: norm, num: num, findHeader: findHeader,
-            autoMap: autoMap, detectFeeSigns: detectFeeSigns, aggregate: aggregate };
+            autoMap: autoMap, detectFeeSigns: detectFeeSigns, aggregate: aggregate,
+            parseCostPaste: parseCostPaste, similar: similar, matchCosts: matchCosts };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 root.XRAY = API;
 })(typeof globalThis !== "undefined" ? globalThis : this);
