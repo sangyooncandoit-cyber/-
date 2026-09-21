@@ -67,7 +67,7 @@ def render(blocks):
     return "\n".join(out)
 
 
-TABS = [("kmong", "크몽"), ("cafe", "카페 홍보"), ("gumroad", "Gumroad")]
+TABS = [("kmong", "크몽"), ("cafe", "카페 홍보"), ("blog", "블로그"), ("gumroad", "Gumroad")]
 panes = []
 for key, label in TABS:
     body = render(parse((COPY / f"{key}.md").read_text(encoding="utf-8")))
