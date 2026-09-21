@@ -8,6 +8,24 @@ BASE = Path(__file__).resolve().parent.parent
 COPY = BASE / "copy"
 
 
+def expand(md: str) -> str:
+    """@@include 파일:제목@@ 을 그 문서의 해당 절 첫 코드펜스로 치환.
+
+    같은 문구를 두 벌 관리하면 반드시 한쪽만 고치는 날이 온다.
+    교체 목록은 원본을 가리키기만 한다.
+    """
+    def sub(m):
+        src, head = m.group(1), m.group(2)
+        doc = (COPY / f"{src}.md").read_text(encoding="utf-8")
+        i = doc.find(f"## {head}")
+        assert i >= 0, f"{src}.md 에 '## {head}' 절이 없다"
+        a = doc.find("```", i)
+        b = doc.find("```", a + 3)
+        assert a >= 0 and b >= 0, f"{src}.md '{head}' 절에 코드펜스가 없다"
+        return doc[a:b + 3]
+    return re.sub(r"^@@include ([\w-]+):(.+?)@@$", sub, md, flags=re.M)
+
+
 def parse(md: str):
     """마크다운을 블록 목록으로. 코드펜스는 복사 대상, 나머지는 설명."""
     blocks, lines, i = [], md.split("\n"), 0
@@ -67,14 +85,16 @@ def render(blocks):
     return "\n".join(out)
 
 
-TABS = [("kmong", "크몽"), ("cafe", "카페 홍보"), ("blog", "블로그"), ("gumroad", "Gumroad")]
+TABS = [("swap", "승인 후 교체"), ("kmong", "크몽"), ("cafe", "카페 홍보"),
+        ("blog", "블로그"), ("gumroad", "Gumroad")]
+FIRST = TABS[0][0]
 panes = []
 for key, label in TABS:
-    body = render(parse((COPY / f"{key}.md").read_text(encoding="utf-8")))
-    panes.append(f'<div class="pane" id="p-{key}"{"" if key == "kmong" else " hidden"}>{body}</div>')
+    body = render(parse(expand((COPY / f"{key}.md").read_text(encoding="utf-8"))))
+    panes.append(f'<div class="pane" id="p-{key}"{"" if key == FIRST else " hidden"}>{body}</div>')
 
 tabs = "".join(
-    f'<button class="tab{" on" if k == "kmong" else ""}" data-t="{k}" type="button">{l}</button>'
+    f'<button class="tab{" on" if k == FIRST else ""}" data-t="{k}" type="button">{l}</button>'
     for k, l in TABS)
 
 page = f"""<title>판매 문구 덱</title>
@@ -104,8 +124,10 @@ body{{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans)
 .bar{{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--ground);
   border-bottom:1px solid var(--line);margin-inline:-16px;padding:11px 16px 0}}
 .bar h1{{font-size:16px;font-weight:700;margin:0 0 10px;letter-spacing:-.01em}}
-.tabs{{display:flex;gap:4px}}
-.tab{{font:500 14px var(--sans);padding:8px 16px;border:1px solid var(--line);border-bottom:none;
+.tabs{{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}}
+.tabs::-webkit-scrollbar{{display:none}}
+.tab{{flex:0 0 auto;white-space:nowrap;
+  font:500 14px var(--sans);padding:8px 16px;border:1px solid var(--line);border-bottom:none;
   background:var(--sunk);color:var(--muted);border-radius:7px 7px 0 0;cursor:pointer}}
 .tab.on{{background:var(--paper);color:var(--accent);font-weight:600;
   box-shadow:inset 0 2px 0 var(--accent)}}
