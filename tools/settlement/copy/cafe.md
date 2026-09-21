@@ -76,14 +76,14 @@ https://sangyooncandoit-cyber.github.io/settlement-xray/
 실제로 남은 건 192만원이더라고요. 적자 상품도 두 개 나왔고요.
 
 혹시 필요하신 분 써보세요.
-[링크]
+https://sangyooncandoit-cyber.github.io/settlement-xray/
 ```
 
 ## 아주 짧게 (다른 글에 댓글로)
 
 ```
 정산 엑셀 넣으면 상품별 순이익이랑 적자 상품 찾아주는 거 만들어서 쓰고 있습니다.
-무료고 설치 없어요. 혹시 필요하시면 [링크]
+무료고 설치 없어요. 혹시 필요하시면 https://sangyooncandoit-cyber.github.io/settlement-xray/
 ```
 
 ## 올린 다음
