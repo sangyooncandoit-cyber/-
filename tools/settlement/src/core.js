@@ -108,8 +108,14 @@ function aggregate(rows, map, feeMul, costs, ad){
   }
   var items = order.map(function(k){ return by[k]; });
   var posRev = items.reduce(function(s, o){ return s + Math.max(0, o.rev); }, 0);
+
+  /* 같은 상품을 마켓마다 다르게 적어둔다. 원가는 한 번만 넣고 쓰도록
+     정확한 이름이 없으면 표기를 지운 이름으로 한 번 더 찾는다. */
+  var costIdx = {};
+  Object.keys(costs).forEach(function(k){ costIdx[norm(k)] = costs[k]; });
+
   items.forEach(function(o){
-    o.unit   = Number(costs[o.name] || 0);
+    o.unit   = Number((costs[o.name] != null ? costs[o.name] : costIdx[norm(o.name)]) || 0);
     o.cogs   = o.unit * o.qty;
     o.ad     = posRev > 0 ? ad * (Math.max(0, o.rev) / posRev) : 0;
     o.profit = o.rev - o.fee - o.cogs - o.ad;
@@ -209,9 +215,73 @@ function matchCosts(pasted, names, opts){
   return { costs: costs, ask: ask, miss: miss };
 }
 
+/* ── 여러 마켓 합치기 ───────────────────────────────────────────
+   파일마다 컬럼도 수수료 부호도 광고비도 다르므로 집계는 파일별로 따로 한다.
+   합치는 것은 그 결과다. 표기만 다른 같은 이름은 알아서 묶고,
+   비슷하기만 한 것은 묶지 않고 후보로만 내놓는다. */
+
+/* 파일별 집계 결과들을 상품 단위로 합친다. alias 는 사용자가 직접 묶어준 것. */
+function mergeItems(lists, alias){
+  alias = alias || {};
+  var by = {}, order = [];
+  (lists || []).forEach(function(list){
+    (list || []).forEach(function(o){
+      var key = alias[o.name] || norm(o.name);
+      if (!by[key]){
+        by[key] = { name: o.name, qty: 0, rev: 0, fee: 0, cogs: 0, ad: 0,
+                    profit: 0, _srcs: {} };
+        order.push(key);
+      }
+      var t = by[key];
+      if (String(o.name).length > String(t.name).length) t.name = o.name;  // 긴 쪽이 정보가 많다
+      t.qty += o.qty; t.rev += o.rev; t.fee += o.fee;
+      t.cogs += o.cogs; t.ad += o.ad; t.profit += o.profit;
+      if (o.src != null) t._srcs[o.src] = 1;
+    });
+  });
+  return order.map(function(k){
+    var t = by[k];
+    t.unit = t.qty ? t.cogs / t.qty : 0;
+    t.margin = t.rev !== 0 ? t.profit / t.rev : 0;
+    t.sources = Object.keys(t._srcs);
+    delete t._srcs;
+    return t;
+  });
+}
+
+/* 서로 다른 파일에 있는, 같은 상품일 법한 이름 쌍을 찾는다.
+   표기만 다른 것은 이미 합쳐지므로 제외하고 나머지만 내놓는다. */
+function proposeMerges(lists, opts){
+  opts = opts || {};
+  var floor = opts.floor == null ? 0.62 : opts.floor;
+  var gap   = opts.gap   == null ? 0.08 : opts.gap;
+  var out = [], seen = {};
+
+  for (var i = 0; i < (lists || []).length; i++){
+    for (var j = i + 1; j < lists.length; j++){
+      (lists[i] || []).forEach(function(a){
+        var best = null, bestScore = 0, second = 0;
+        (lists[j] || []).forEach(function(b){
+          if (norm(a.name) === norm(b.name)) return;      // 이미 한 덩어리다
+          var sc = similar(a.name, b.name);
+          if (sc > bestScore){ second = bestScore; bestScore = sc; best = b; }
+          else if (sc > second) second = sc;
+        });
+        if (!best || bestScore < floor || bestScore - second < gap) return;
+        var key = [norm(a.name), norm(best.name)].sort().join("|");
+        if (seen[key]) return;
+        seen[key] = 1;
+        out.push({ a: a.name, b: best.name, score: bestScore });
+      });
+    }
+  }
+  return out.sort(function(x, y){ return y.score - x.score; });
+}
+
 var API = { ALIAS: ALIAS, norm: norm, num: num, findHeader: findHeader,
             autoMap: autoMap, detectFeeSigns: detectFeeSigns, aggregate: aggregate,
-            parseCostPaste: parseCostPaste, similar: similar, matchCosts: matchCosts };
+            parseCostPaste: parseCostPaste, similar: similar, matchCosts: matchCosts,
+            mergeItems: mergeItems, proposeMerges: proposeMerges };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 root.XRAY = API;
 })(typeof globalThis !== "undefined" ? globalThis : this);

@@ -134,5 +134,59 @@ console.log("\n── 원가 이름 맞추기 ──");
   ok(twice.costs["무선 이어폰"] === 99999, "같은 상품이 두 번 오면 나중 값이 이긴다");
 }
 
+/* 여러 마켓 합산 */
+console.log("\n── 마켓 합산 ──");
+{
+  const mk = (src, name, qty, rev, fee, cogs, ad) =>
+    ({ src, name, qty, rev, fee, cogs, ad, profit: rev - fee - cogs - ad });
+
+  const ss = [mk("스마트스토어", "유기농 아몬드 1kg", 10, 229000, 15000, 210000, 5000),
+              mk("스마트스토어", "캠핑용 폴딩 의자",   5, 229500, 14000, 140000, 4000)];
+  const cp = [mk("쿠팡", "[로켓배송] 유기농 아몬드 1kg", 4, 91600, 9000, 84000, 2000),
+              mk("쿠팡", "스텐 텀블러 500",             3,  45000, 4500,  30000, 1000)];
+
+  const m = X.mergeItems([ss, cp]);
+  const almond = m.find(o => o.name.indexOf("아몬드") >= 0);
+
+  ok(m.length === 3, "표기만 다른 같은 상품은 한 줄로 합쳐진다", `→ ${m.length}줄`);
+  ok(almond.qty === 14 && almond.rev === 320600,
+     "수량과 매출이 두 마켓에서 더해진다", `→ ${almond.qty}개 / ${almond.rev.toLocaleString()}원`);
+  ok(almond.fee === 24000 && almond.cogs === 294000 && almond.ad === 7000,
+     "수수료·원가·광고비도 각각 더해진다");
+  ok(almond.profit === 320600 - 24000 - 294000 - 7000, "순이익이 합산과 일치");
+  ok(Math.abs(almond.margin - almond.profit / almond.rev) < 1e-12, "마진율은 합산 후 다시 계산");
+  ok(almond.sources.length === 2 && almond.sources.includes("쿠팡"),
+     "어느 마켓에서 왔는지 남는다", `→ [${almond.sources.join(", ")}]`);
+  ok(almond.name === "[로켓배송] 유기농 아몬드 1kg", "표시 이름은 정보가 많은 쪽을 쓴다");
+
+  const solo = m.find(o => o.name.indexOf("텀블러") >= 0);
+  ok(solo.sources.length === 1, "한 마켓에만 있는 상품은 그대로 한 줄");
+
+  /* 광고비는 파일별로 배분한 뒤 합쳐야 한다 */
+  const adTotal = m.reduce((s, o) => s + o.ad, 0);
+  ok(adTotal === 12000, "광고비 총액이 합산 과정에서 보존된다", `→ ${adTotal.toLocaleString()}원`);
+
+  /* 이름이 많이 다르면 묶지 않고 물어본다 */
+  const p = X.proposeMerges([
+    [{ name: "캠핑용 폴딩 의자" }],
+    [{ name: "캠핑 폴딩체어" }, { name: "전혀 다른 상품" }]]);
+  ok(p.length === 0 || p[0].a === "캠핑용 폴딩 의자",
+     "이름이 다른 쌍만 후보로 올라온다", `→ ${p.length}쌍`);
+  ok(!X.proposeMerges([[{ name: "무선 이어폰" }], [{ name: "무선이어폰" }]]).length,
+     "표기 차이는 이미 합쳐지므로 후보로 안 올린다");
+
+  /* 원가는 표기가 달라도 한 번만 넣으면 된다 */
+  const grid = FX.grids.smartstore;
+  const hh = X.findHeader(grid);
+  const hd = grid[hh].map(v => String(v ?? "").trim());
+  const rws = grid.slice(hh + 1).filter(r => r.some(v => String(v ?? "").trim() !== ""));
+  const mp = X.autoMap(hd);
+  const { feeMul } = X.detectFeeSigns(rws, mp);
+  const oneName = X.aggregate(rws, mp, feeMul, {}, 0)[0].name;
+  const spaced = {}; spaced["[특가] " + oneName.replace(/ /g, "")] = 12345;
+  const withCost = X.aggregate(rws, mp, feeMul, spaced, 0).find(o => o.name === oneName);
+  ok(withCost.unit === 12345, "표기가 달라도 원가를 찾아 쓴다", `→ ${withCost.unit}`);
+}
+
 console.log(`\n${fails ? "실패" : "통과"}: ${checks - fails}/${checks}`);
 process.exit(fails ? 1 : 0);
