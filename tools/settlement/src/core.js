@@ -160,7 +160,8 @@ function aggregate(rows, map, feeMul, costs, ad, opts){
     o.cogs   = o.unit * o.qty;
     o.ad     = posRev > 0 ? ad * (Math.max(0, o.rev) / posRev) : 0;
     o.disc   = Math.abs(o.disc);                   // 마켓마다 +로도 -로도 적는다
-    o.profit = o.rev - o.fee - o.cogs - o.ad - o.ship - (useDisc ? o.disc : 0);
+    o.discApplied = useDisc ? o.disc : 0;
+    o.profit = o.rev - o.fee - o.cogs - o.ad - o.ship - o.discApplied;
     o.margin = o.rev !== 0 ? o.profit / o.rev : 0;
   });
   return items;
@@ -257,6 +258,27 @@ function matchCosts(pasted, names, opts){
   return { costs: costs, ask: ask, miss: miss };
 }
 
+/* 적자 상품을 찾은 다음이 비어 있었다. 얼마면 본전인지까지 내놓는다.
+
+   판매가를 올리면 수수료도 같이 오른다. 수수료는 매출에 비례하므로
+   필요 매출 X 는 X - X*r - (원가+광고비+택배비) = 0 을 푼 값이다.
+   여기서 r 은 이 상품의 실효 수수료율이다. */
+function breakeven(o){
+  var qty = Number(o.qty) || 0;
+  var fixed = (o.cogs || 0) + (o.ad || 0) + (o.ship || 0) + (o.discApplied || 0);
+  var out = { price: null, cost: null, gap: 0 };
+  if (qty <= 0 || (o.profit || 0) >= 0) return out;
+
+  var r = o.rev > 0 ? (o.fee || 0) / o.rev : 0;
+  if (r < 0) r = 0;
+  if (r < 1) out.price = (fixed / (1 - r)) / qty;      // 개당 필요 판매가
+
+  var room = (o.rev || 0) - (o.fee || 0) - (o.ad || 0) - (o.ship || 0) - (o.discApplied || 0);
+  if (room > 0) out.cost = room / qty;                 // 개당 버틸 수 있는 원가
+  out.gap = -(o.profit || 0);
+  return out;
+}
+
 /* ── 여러 마켓 합치기 ───────────────────────────────────────────
    파일마다 컬럼도 수수료 부호도 광고비도 다르므로 집계는 파일별로 따로 한다.
    합치는 것은 그 결과다. 표기만 다른 같은 이름은 알아서 묶고,
@@ -271,7 +293,7 @@ function mergeItems(lists, alias){
       var key = alias[o.name] || norm(o.name);
       if (!by[key]){
         by[key] = { name: o.name, qty: 0, rev: 0, fee: 0, cogs: 0, ad: 0,
-                    ship: 0, disc: 0, profit: 0, _srcs: {} };
+                    ship: 0, disc: 0, discApplied: 0, profit: 0, _srcs: {} };
         order.push(key);
       }
       var t = by[key];
@@ -279,6 +301,7 @@ function mergeItems(lists, alias){
       t.qty += o.qty; t.rev += o.rev; t.fee += o.fee;
       t.cogs += o.cogs; t.ad += o.ad; t.profit += o.profit;
       t.ship += (o.ship || 0); t.disc += (o.disc || 0);
+      t.discApplied += (o.discApplied || 0);
       if (o.src != null) t._srcs[o.src] = 1;
     });
   });
@@ -323,7 +346,7 @@ function proposeMerges(lists, opts){
 
 var API = { ALIAS: ALIAS, norm: norm, num: num, findHeader: findHeader,
             autoMap: autoMap, detectFeeSigns: detectFeeSigns, aggregate: aggregate,
-            countOrders: countOrders,
+            countOrders: countOrders, breakeven: breakeven,
             parseCostPaste: parseCostPaste, similar: similar, matchCosts: matchCosts,
             mergeItems: mergeItems, proposeMerges: proposeMerges };
 if (typeof module !== "undefined" && module.exports) module.exports = API;

@@ -254,5 +254,44 @@ console.log("\n── 택배비 ──");
      "할인을 음수로 적은 파일도 같은 결과");
 }
 
+/* 손익분기 */
+console.log("\n── 손익분기 ──");
+{
+  const mk = o => Object.assign({ qty:0, rev:0, fee:0, cogs:0, ad:0, ship:0, discApplied:0 }, o);
+  const fin = o => (o.profit = o.rev - o.fee - o.cogs - o.ad - o.ship - o.discApplied, o);
+
+  const loss = fin(mk({ qty:19, rev:435100, fee:30235, cogs:399000, ad:32032 }));
+  const b = X.breakeven(loss);
+
+  ok(b.price > 435100 / 19, "필요 판매가는 지금 판매가보다 높다",
+     `${Math.round(b.price)} > ${Math.round(435100/19)}`);
+  const X2 = b.price * loss.qty, r = loss.fee / loss.rev;
+  ok(near(X2 - X2*r - loss.cogs - loss.ad - loss.ship, 0, 1),
+     "그 가격에 팔면 순이익이 정확히 0", `검산 ${Math.round(X2 - X2*r - loss.cogs - loss.ad)}`);
+  ok(b.cost < loss.cogs / loss.qty, "버틸 수 있는 원가는 지금 원가보다 낮다",
+     `${Math.round(b.cost)} < ${Math.round(loss.cogs/19)}`);
+  ok(near(loss.rev - loss.fee - loss.ad - loss.ship - b.cost * loss.qty, 0, 1),
+     "그 원가면 순이익이 정확히 0");
+  ok(near(b.gap, 26167, 1), "메워야 할 금액은 적자액 그대로", `${Math.round(b.gap)}`);
+
+  const win = fin(mk({ qty:34, rev:1560600, fee:106716, cogs:952000, ad:114891 }));
+  ok(X.breakeven(win).price === null, "흑자 상품에는 손익분기를 내지 않는다");
+
+  ok(X.breakeven(fin(mk({ qty:0, rev:0, fee:0, cogs:1000 }))).price === null,
+     "수량이 0이면 계산하지 않는다");
+
+  /* 택배비·할인이 붙어 있으면 그것까지 메워야 한다 */
+  const heavy = fin(mk({ qty:10, rev:100000, fee:10000, cogs:95000, ad:0,
+                         ship:5000, discApplied:3000 }));
+  const hb = X.breakeven(heavy);
+  const HX = hb.price * 10, hr = heavy.fee / heavy.rev;
+  ok(near(HX - HX*hr - heavy.cogs - heavy.ship - heavy.discApplied, 0, 1),
+     "택배비와 할인까지 넣고 본전을 맞춘다", `개당 ${Math.round(hb.price)}원`);
+
+  /* 수수료율이 100%를 넘으면 가격을 올려도 답이 없다 */
+  const mad = fin(mk({ qty:1, rev:1000, fee:1200, cogs:500 }));
+  ok(X.breakeven(mad).price === null, "수수료가 매출보다 크면 필요 판매가를 못 낸다");
+}
+
 console.log(`\n${fails ? "실패" : "통과"}: ${checks - fails}/${checks}`);
 process.exit(fails ? 1 : 0);

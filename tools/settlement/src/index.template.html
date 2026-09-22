@@ -90,6 +90,24 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
   background:var(--sunk);color:var(--ink);border-radius:3px}
 .map .auto{font-size:11px;color:var(--seal);margin-top:6px;display:block;line-height:1.5}
 
+/* 적자 상품 처방 */
+.fix{margin-top:22px;border:1.5px solid var(--loss);background:var(--paper)}
+.fix>h3{margin:0;padding:13px 16px;font-family:var(--myeongjo);font-size:15px;font-weight:800;
+  background:var(--loss);color:var(--paper);letter-spacing:-.01em}
+.fix>p{margin:0;padding:12px 16px 0;font-size:12.5px;color:var(--muted);line-height:1.7}
+.fx{padding:14px 16px;border-top:1px solid var(--hair)}
+.fx:first-of-type{border-top:none}
+.fx .t{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.fx .t b{font-size:14.5px;font-weight:700;word-break:break-all}
+.fx .t .g{font-variant-numeric:tabular-nums;color:var(--loss);font-weight:700;white-space:nowrap}
+.fx .o{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+@media(max-width:430px){.fx .o{grid-template-columns:1fr}}
+.fx .o>div{background:var(--sunk);padding:10px 12px;border:1px solid var(--hair)}
+.fx .o .k{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.03em}
+.fx .o .v{font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;margin-top:4px}
+.fx .o .s{font-size:11.5px;color:var(--muted);margin-top:3px}
+.fx .o .v .now{font-weight:400;font-size:12px;color:var(--muted)}
+
 /* 택배비·할인 */
 .extras{margin-top:16px;border-top:1px solid var(--hair);padding-top:6px}
 .extras .adrow small{flex-basis:100%}
@@ -336,6 +354,7 @@ h3.sub:first-child{margin-top:0}
         <span>막대 방향과 부호로도 구분됩니다</span>
       </div>
       <div class="chart" id="chart"></div>
+      <div class="fix" id="fix" hidden></div>
 
       <h3 class="sub">상세 내역</h3>
       <div class="tablebox"><table id="tbl">
@@ -374,7 +393,7 @@ const BUY_URL = "/*__BUY_URL__*/";
 const LITE_ROWS = 3;   // 라이트에서 상품별로 보여주는 개수
 /*__CORE__*/
 
-const { num, findHeader, autoMap, detectFeeSigns, aggregate, countOrders,
+const { num, findHeader, autoMap, detectFeeSigns, aggregate, countOrders, breakeven,
         parseCostPaste, matchCosts, mergeItems, proposeMerges, norm } = XRAY;
 const ROLE_KO = {name:"상품명",qty:"수량",rev:"매출",fee:"수수료",
                  order:"주문번호",disc:"판매자 부담 할인",date:"날짜"};
@@ -607,6 +626,35 @@ function renderResults(){
       ${showDisc ? `<td>${fmt(o.disc)}</td>` : ""}
       <td class="${o.profit>=0?"pos":"neg"}">${signed(o.profit)}</td>
       <td class="${o.profit>=0?"pos":"neg"}">${(o.margin*100).toFixed(1)}%</td></tr>`).join("");
+
+  /* 적자를 찾은 다음이 비어 있었다. 얼마면 본전인지까지 내놓는다.
+     라이트에서는 어느 상품인지가 가려지므로 이 블록도 함께 잠근다. */
+  const fixBox = document.getElementById("fix");
+  const fixable = LITE ? [] : losers
+    .map(o => ({ o: o, b: breakeven(o) }))
+    .filter(x => x.b.price != null || x.b.cost != null)
+    .sort((a, b) => a.o.profit - b.o.profit);
+
+  fixBox.hidden = !fixable.length;
+  if (fixable.length){
+    fixBox.innerHTML = `<h3>이 상품들, 얼마면 본전인가</h3>
+      <p>지금 조건에서 순이익이 0이 되는 지점입니다.
+        수수료가 판매가에 비례해 같이 오르는 것까지 넣어 계산했습니다.</p>` +
+      fixable.map(({o, b}) => {
+        const nowP = o.qty ? o.rev / o.qty : 0, nowC = o.qty ? o.cogs / o.qty : 0;
+        return `<div class="fx">
+          <div class="t"><b>${esc(o.name)}</b>
+            <span class="g">${signed(o.profit)}원</span></div>
+          <div class="o">
+            ${b.price != null ? `<div><div class="k">판매가를 올린다면</div>
+              <div class="v">${fmt(Math.ceil(b.price))}원</div>
+              <div class="s">지금 ${fmt(Math.round(nowP))}원 · ${fmt(Math.ceil(b.price - nowP))}원 인상</div></div>` : ""}
+            ${b.cost != null ? `<div><div class="k">매입가를 낮춘다면</div>
+              <div class="v">${fmt(Math.floor(b.cost))}원</div>
+              <div class="s">지금 ${fmt(Math.round(nowC))}원 · ${fmt(Math.ceil(nowC - b.cost))}원 인하</div></div>` : ""}
+          </div></div>`;
+      }).join("");
+  }
 
   const lockBox = document.getElementById("lock");
   if (LITE && hidden > 0){
