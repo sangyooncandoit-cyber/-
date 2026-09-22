@@ -258,6 +258,60 @@ function matchCosts(pasted, names, opts){
   return { costs: costs, ask: ask, miss: miss };
 }
 
+/* 이 파일이 어느 달 것인지. 날짜 칸에서 제일 많이 나오는 연월을 쓴다.
+   한 파일에 두 달이 걸쳐 있어도 주된 달로 잡힌다. */
+function periodOf(rows, map){
+  var di = map.date, tally = {}, best = null, bn = 0;
+  if (di == null) return null;
+  for (var i = 0; i < rows.length; i++){
+    var v = rows[i][di];
+    var t = (v instanceof Date) ? (v.getFullYear() + "-" + ("0" + (v.getMonth() + 1)).slice(-2))
+                                : String(v == null ? "" : v).trim();
+    var m = t.match(/(20\d{2})\D?(0[1-9]|1[0-2])/);
+    if (!m) continue;
+    var k = m[1] + "-" + m[2];
+    tally[k] = (tally[k] || 0) + 1;
+    if (tally[k] > bn){ bn = tally[k]; best = k; }
+  }
+  return best;
+}
+
+/* 두 기간의 집계를 상품별로 맞붙인다.
+   한 달치만 보면 "지금 적자"는 알지만 "적자로 넘어가는 중"은 못 잡는다. */
+function compareItems(prev, curr){
+  var byPrev = {}, out = [];
+  (prev || []).forEach(function(o){ byPrev[norm(o.name)] = o; });
+  var seen = {};
+
+  (curr || []).forEach(function(o){
+    var k = norm(o.name), p = byPrev[k] || null;
+    seen[k] = 1;
+    out.push({
+      name: o.name,
+      prev: p ? p.profit : null,
+      curr: o.profit,
+      delta: o.profit - (p ? p.profit : 0),
+      isNew: !p,
+      gone: false,
+      crossed: !!p && p.profit >= 0 && o.profit < 0,   // 흑자에서 적자로 넘어갔다
+      recovered: !!p && p.profit < 0 && o.profit >= 0
+    });
+  });
+
+  (prev || []).forEach(function(o){
+    var k = norm(o.name);
+    if (seen[k]) return;
+    out.push({ name: o.name, prev: o.profit, curr: null, delta: -o.profit,
+               isNew: false, gone: true, crossed: false, recovered: false });
+  });
+
+  // 넘어간 것 먼저, 그다음 많이 나빠진 순
+  return out.sort(function(a, b){
+    if (a.crossed !== b.crossed) return a.crossed ? -1 : 1;
+    return a.delta - b.delta;
+  });
+}
+
 /* 적자 상품을 찾은 다음이 비어 있었다. 얼마면 본전인지까지 내놓는다.
 
    판매가를 올리면 수수료도 같이 오른다. 수수료는 매출에 비례하므로
@@ -347,6 +401,7 @@ function proposeMerges(lists, opts){
 var API = { ALIAS: ALIAS, norm: norm, num: num, findHeader: findHeader,
             autoMap: autoMap, detectFeeSigns: detectFeeSigns, aggregate: aggregate,
             countOrders: countOrders, breakeven: breakeven,
+            periodOf: periodOf, compareItems: compareItems,
             parseCostPaste: parseCostPaste, similar: similar, matchCosts: matchCosts,
             mergeItems: mergeItems, proposeMerges: proposeMerges };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
