@@ -160,9 +160,203 @@ details[open] summary{font-weight:700}
 footer{border-top:2.5px solid var(--heavy);padding-top:18px;margin-top:40px;
   font-size:12.5px;color:var(--muted);line-height:1.8;word-break:keep-all}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ── 무대 ────────────────────────────────────────────────────────────
+   높이에 잠근 단위. 어떤 화면에서도 첫 화면이 한 장의 구도로 끝난다.
+   가로가 넓어지면 활자만 조금 자라고, 세로는 절대 넘치지 않는다. */
+.stage{
+  --u:calc(100vh / 900);
+  --uw:calc(100vw / 1440);
+  --h:clamp(var(--u), calc(var(--u)*.62 + var(--uw)*.38), calc(var(--u)*1.18));
+  --void:#070707; --dim:#6E6B66; --lit:#E8E3D6; --red:#D9534A;
+  position:relative;min-height:100vh;background:var(--void);color:var(--lit);
+  display:flex;flex-direction:column;overflow:hidden;
+  padding:calc(30*var(--u)) clamp(20px,5vw,calc(76*var(--u))) calc(24*var(--u));
+  padding-bottom:max(calc(24*var(--u)),env(safe-area-inset-bottom));
+}
+@supports (min-height:100dvh){.stage{--u:calc(100dvh / 900);min-height:100dvh}}
+
+/* 바닥에서 올라오는 옅은 빛. 장식이 아니라 아래 문서로 이어지는 통로다. */
+.stage::before{content:"";position:absolute;inset:auto 0 0;height:62%;
+  background:radial-gradient(120% 100% at 50% 118%,
+    rgba(232,227,214,.13) 0%, rgba(232,227,214,.05) 38%, transparent 70%);
+  pointer-events:none}
+.stage::after{content:"";position:absolute;inset:auto 0 0;height:22%;
+  background:linear-gradient(to bottom,transparent,rgba(7,7,7,.85) 62%,var(--void));
+  pointer-events:none}
+
+.stage > *{position:relative;z-index:1}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.top .mk{display:block;width:calc(23*var(--u));height:calc(35*var(--u));min-width:19px}
+.top .tag{font-size:clamp(11px,calc(12.5*var(--h)),15px);letter-spacing:.14em;
+  color:var(--dim);font-weight:700;text-transform:uppercase}
+
+.lead{flex:1;display:grid;align-items:center;
+  grid-template-columns:minmax(0,1fr) auto;gap:0 clamp(24px,4vw,calc(56*var(--u)));
+  padding-block:calc(30*var(--u)) calc(22*var(--u))}
+.eyebrow{font-size:clamp(11px,calc(12.5*var(--h)),15px);letter-spacing:.09em;
+  color:var(--dim);margin:0 0 calc(18*var(--u));font-weight:500}
+
+.big{font-family:var(--myeongjo);font-weight:800;color:var(--lit);
+  font-size:clamp(27px,calc(53*var(--h)),70px);line-height:1.3;letter-spacing:-.025em;
+  margin:0;word-break:keep-all}
+.big span{display:block}
+.big .was{color:#8B8880}
+.big em{font-style:normal;position:relative;white-space:nowrap}
+.big em::after{content:"";position:absolute;left:0;right:0;bottom:calc(-9*var(--u));
+  height:calc(2*var(--u));min-height:1.5px;background:var(--lit);
+  transform-origin:left;transform:scaleX(0);animation:draw 1s .85s both cubic-bezier(.22,1,.36,1)}
+
+.say{font-size:clamp(13px,calc(16.5*var(--h)),20px);line-height:1.85;color:#A5A29B;
+  margin:calc(28*var(--u)) 0 0;max-width:46ch;word-break:keep-all}
+
+.cta{display:flex;align-items:center;gap:clamp(14px,calc(26*var(--u)),30px);
+  flex-wrap:wrap;margin-top:calc(38*var(--u))}
+.pill{display:inline-flex;align-items:center;justify-content:center;
+  background:var(--lit);color:#0A0A0A;text-decoration:none;border-radius:999px;
+  font-weight:700;font-size:clamp(13px,calc(15.5*var(--h)),18px);letter-spacing:-.01em;
+  padding:calc(14*var(--u)) calc(30*var(--u));min-height:44px;
+  transition:transform .3s cubic-bezier(.22,1,.36,1),background .3s}
+.pill:hover{background:#fff;transform:translateY(-1px)}
+.pill:focus-visible{outline:2px solid var(--lit);outline-offset:3px}
+.ghost{color:#B8B4AC;text-decoration:none;font-size:clamp(12.5px,calc(15*var(--h)),17px);
+  font-weight:500;border-bottom:1px solid rgba(184,180,172,.34);padding-bottom:2px;
+  transition:color .3s,border-color .3s}
+.ghost:hover{color:var(--lit);border-color:var(--lit)}
+.ghost:focus-visible{outline:2px solid var(--lit);outline-offset:3px}
+
+/* ── 빛기둥 ──────────────────────────────────────────────────────────
+   매출 한 덩어리가 위에서 내려오며 수수료·원가·광고비에 잘려 나가고,
+   맨 아래 남는 것이 실제로 번 돈이다. 높이는 전부 실제 금액 비례다.
+   차감은 물러나고 남은 것만 빛난다 — 색이 아니라 밝기로 가른다. */
+.beam{margin:0;align-self:stretch;display:flex;gap:calc(22*var(--u));
+  align-items:stretch;max-height:calc(660*var(--u))}
+.col{width:calc(74*var(--u));min-width:38px;display:flex;flex-direction:column;
+  gap:calc(3*var(--u))}
+.seg{border-radius:calc(3*var(--u));transform-origin:top;animation:grow .85s both cubic-bezier(.22,1,.36,1)}
+.seg.d{background:var(--dim);opacity:.42}
+.seg.d.s2{opacity:.6}
+.seg.d.s3{opacity:.3}
+.seg.k{background:var(--lit);position:relative;
+  box-shadow:0 0 calc(26*var(--u)) rgba(232,227,214,.34)}
+.seg.k::after{content:"";position:absolute;left:24%;right:24%;top:26%;
+  height:calc(3.5*var(--u));min-height:2.5px;background:var(--red);border-radius:2px;
+  box-shadow:0 calc(14*var(--u)) 0 var(--red)}
+.keys{display:flex;flex-direction:column;justify-content:space-between;
+  align-items:flex-end;text-align:right;
+  font-size:clamp(10.5px,calc(13*var(--h)),15px);line-height:1.4;color:var(--dim);
+  padding-block:calc(2*var(--u))}
+.keys b{display:block;font-weight:700;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;color:#96938C}
+.keys .win{color:var(--lit)}
+.keys .win b{color:var(--lit);font-size:1.16em}
+.keys .warn{color:var(--red);font-weight:700;margin-top:calc(5*var(--u));display:block}
+
+.feet{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;border-top:1px solid rgba(232,227,214,.11);padding-top:calc(16*var(--u));
+  font-size:clamp(10.5px,calc(12.5*var(--h)),14.5px);color:var(--dim);letter-spacing:.04em}
+.feet .dn{display:inline-flex;align-items:center;gap:7px}
+.feet svg{width:1em;height:1em;animation:nudge 2.4s 1.6s infinite ease-in-out}
+
+@keyframes grow{from{transform:scaleY(0);opacity:0}}
+@keyframes draw{to{transform:scaleX(1)}}
+@keyframes lift{from{opacity:0;transform:translateY(calc(15*var(--u)))}}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+.top,.eyebrow,.big,.say,.cta,.feet{animation:lift .9s both cubic-bezier(.22,1,.36,1)}
+.eyebrow{animation-delay:.05s}.big{animation-delay:.12s}.say{animation-delay:.22s}
+.cta{animation-delay:.3s}.feet{animation-delay:.42s}
+.seg{animation-delay:calc(.34s + var(--i) * .11s)}
+
+@media(max-aspect-ratio:10/9),(max-width:760px){
+  .stage{padding-top:calc(24*var(--u));padding-bottom:calc(18*var(--u))}
+  .lead{grid-template-columns:1fr;gap:calc(26*var(--u)) 0;
+    padding-block:calc(20*var(--u)) calc(14*var(--u))}
+  /* 세로 화면은 너비가 한계다. 명조 큰 활자가 네 줄로 번지면 구도가 무너진다. */
+  .big{font-size:clamp(24px,min(calc(40*var(--h)),7.2vw),37px);line-height:1.34}
+  .say{margin-top:calc(20*var(--u));font-size:clamp(12.5px,calc(14.5*var(--h)),16px);
+    line-height:1.75}
+  .cta{margin-top:calc(24*var(--u));gap:calc(16*var(--u))}
+  .eyebrow{margin-bottom:calc(12*var(--u))}
+  .beam{align-self:flex-start;flex-direction:column;max-height:none;width:100%;
+    gap:calc(12*var(--u))}
+  .beam .col{flex-direction:row;width:auto;flex:1;height:calc(46*var(--u));min-height:26px}
+  .seg{transform-origin:left}
+  @keyframes grow{from{transform:scaleX(0);opacity:0}}
+  .seg.k::after{left:auto;right:22%;top:18%;bottom:18%;width:calc(2*var(--u));height:auto;
+    box-shadow:calc(-9*var(--u)) 0 0 var(--red)}
+  .keys{flex-direction:row;justify-content:space-between;padding:0}
+  .keys>span{max-width:8.5em}
+}
+@media(prefers-reduced-motion:reduce){
+  .top,.eyebrow,.big,.say,.cta,.feet,.seg,.big em::after,.feet svg{animation:none}
+  .seg{transform:none}.big em::after{transform:scaleX(1)}
+}
+
+/* 무대에서 문서로. 어둠이 걷히고 종이가 나온다. */
+.dawn{height:clamp(60px,9vh,110px);
+  background:linear-gradient(to bottom,#070707,var(--ground))}
 </style>
 
-<div class="sheet">
+<div class="stage">
+  <header class="top">
+    <span class="mk" aria-hidden="true">
+      <svg viewBox="0 0 23 35" fill="none" aria-hidden="true">
+        <path d="M15.5 0v14h7.5v7L7 35V21H0v-7z" fill="#E8E3D6"/>
+        <path d="M15.5 0v14h7.5L15.5 0z" fill="#8B8880"/>
+        <path d="M7 35V21H0l7 14z" fill="#8B8880"/>
+      </svg>
+    </span>
+    <span class="tag">오픈마켓 정산 손익 분석</span>
+  </header>
+
+  <main class="lead">
+    <div>
+      <p class="eyebrow">2026년 9월 · 주문 253건 · 상품 10개</p>
+      <h1 class="big">
+        <span class="was">통장에 5,692,369원.</span>
+        <span>실제로 번 돈은 <em>1,925,069원</em>.</span>
+      </h1>
+      <p class="say">정산서는 얼마가 입금되는지까지만 적혀 있습니다.
+        그 돈에서 무엇이 더 빠져나갔는지, 어떤 상품이 손해를 내고 있는지는
+        거기 없습니다.</p>
+      <div class="cta">
+        <a class="pill" href="https://claude.ai/artifact/BA2SCuYfrjucy7veU2qMHh"
+          target="_blank" rel="noopener">내 정산서로 확인해보기</a>
+        <a class="ghost" href="#doc">어떻게 계산하는지 보기</a>
+      </div>
+    </div>
+
+    <figure class="beam" role="img"
+      aria-label="매출 6,112,500원에서 수수료 420,131원, 매입 원가 3,317,300원,
+        광고비 450,000원이 빠지고 실제 순이익 1,925,069원이 남습니다.
+        그 안에 적자 상품이 2개 있습니다.">
+      <div class="keys" aria-hidden="true">
+        <span>수수료<b>− 420,131</b></span>
+        <span>매입 원가<b>− 3,317,300</b></span>
+        <span>광고비<b>− 450,000</b></span>
+        <span class="win">실제 순이익<b>1,925,069</b>
+          <span class="warn">적자 상품 2개 포함</span></span>
+      </div>
+      <div class="col">
+        <div class="seg d s2" style="flex:6.9;--i:0"></div>
+        <div class="seg d"    style="flex:54.3;--i:1"></div>
+        <div class="seg d s3" style="flex:7.4;--i:2"></div>
+        <div class="seg k"    style="flex:31.5;--i:3"></div>
+      </div>
+    </figure>
+  </main>
+
+  <div class="feet">
+    <span>스마트스토어 · 쿠팡 · 11번가 · 지마켓</span>
+    <a class="dn ghost" href="#doc" style="border:0">계속 읽기
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+        aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+  </div>
+</div>
+<div class="dawn" aria-hidden="true"></div>
+
+<div class="sheet" id="doc">
 
   <div class="head">
     <div class="org">정산 엑스레이</div>
@@ -172,11 +366,10 @@ footer{border-top:2.5px solid var(--heavy);padding-top:18px;margin-top:40px;
   </div>
 
   <section>
-    <h1>통장에 <span class="num">5,692,369원</span>이 들어왔습니다.<br>
-      실제로 번 돈은 <span class="num pos">1,925,069원</span>입니다.</h1>
-    <p class="lede">정산서는 얼마가 입금되는지까지만 알려줍니다.
-      그 돈에서 원가와 광고비를 빼면 얼마가 남는지,
-      어떤 상품이 돈을 잃고 있는지는 알려주지 않습니다.</p>
+    <h1>사라진 <span class="num">3,767,300원</span>은<br>어디로 갔나</h1>
+    <p class="lede">통장에 찍힌 5,692,369원과 실제로 남은 1,925,069원의 차이입니다.
+      매입 원가와 광고비가 그 사이에 있고, 둘 다 정산서에는 적혀 있지 않습니다.
+      한 줄씩 보여드리겠습니다.</p>
 
     <div class="slip">
       <div class="cap">2026년 9월 · 주문 253건 · 상품 10개</div>
