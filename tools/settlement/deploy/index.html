@@ -105,6 +105,16 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
   background:var(--sunk);color:var(--ink);border-radius:3px}
 .map .auto{font-size:11px;color:var(--seal);margin-top:6px;display:block;line-height:1.5}
 
+/* 택배비·할인 */
+.extras{margin-top:16px;border-top:1px solid var(--hair);padding-top:6px}
+.extras .adrow small{flex-basis:100%}
+.extras .off{color:var(--muted);font-size:12.5px;line-height:1.7;margin-top:10px}
+.chk{display:flex;align-items:flex-start;gap:9px;margin-top:14px;font-size:13.5px;
+  cursor:pointer;line-height:1.6}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:0 0 auto;accent-color:var(--seal)}
+.chk b{font-weight:700}
+.chk em{font-style:normal;color:var(--muted);font-size:12.5px;display:block;margin-top:3px}
+
 /* 원가 일괄 입력 */
 .bulkbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .bulkbar small{color:var(--muted);font-size:12.5px}
@@ -324,6 +334,7 @@ h3.sub:first-child{margin-top:0}
       <div class="mergebox" id="mergebox" hidden></div>
       <div class="costgrid" id="costs"></div>
       <div class="adrows" id="adrows"></div>
+      <div class="extras" id="extras"></div>
     </div>
   </section>
 
@@ -346,6 +357,7 @@ h3.sub:first-child{margin-top:0}
         <thead><tr>
           <th class="l" data-k="name">상품명</th><th data-k="qty">수량</th><th data-k="rev">매출</th>
           <th data-k="fee">수수료</th><th data-k="cogs">원가</th><th data-k="ad">광고비</th>
+          <th data-k="ship" hidden>택배비</th><th data-k="disc" hidden>할인</th>
           <th data-k="profit">순이익</th><th data-k="margin">마진율</th>
         </tr></thead><tbody></tbody>
       </table></div>
@@ -361,7 +373,9 @@ h3.sub:first-child{margin-top:0}
   </section>
 
   <p class="foot">
-    <b>계산식</b> &nbsp;<code>순이익 = 매출 − 수수료 − 원가 − 광고비</code><br>
+    <b>계산식</b> &nbsp;<code>순이익 = 매출 − 수수료 − 원가 − 광고비 − 택배비 − 판매자부담할인</code><br>
+    택배비는 건당 단가를 넣으셔야 계산하고, 주문 단위로 붙습니다.
+    할인은 매출 칸이 할인 전 금액일 때만 켜세요.<br>
     반품은 음수 행으로 인식해 매출·수수료·원가에서 함께 차감합니다.
     수수료 부호(마켓마다 +/− 표기가 다릅니다)는 매출 부호와 비교해 자동 보정합니다.<br>
     부가세·배송비·재고 평가는 계산에 포함되지 않습니다. 세무 신고용이 아닌 <b>손익 파악용</b>입니다.
@@ -385,6 +399,9 @@ var ALIAS = {
   fee:   ["수수료","판매수수료","결제수수료","주문관리수수료","매출연동수수료","서비스이용료",
           "쿠폰분담금","할인분담금","차감액","공제금액"],
   settle:["정산금액","정산대상금액","정산예정금액","실지급액","지급액"],
+  order: ["주문번호","상품주문번호","묶음배송번호","배송비묶음번호","주문no"],
+  disc:  ["판매자부담할인액","판매자부담할인","셀러부담할인","판매자할인액",
+          "판매자부담쿠폰","즉시할인액","상품할인액"],
   date:  ["정산완료일","정산일","정산기준일","결제일","주문일","날짜"]
 };
 var SUMMARY_WORDS = ["합계","소계","총계","계","total"];
@@ -433,7 +450,7 @@ function scoreHeader(h, alias){
 /* 컬럼 → 역할. 수수료만 여러 컬럼을 동시에 가진다. */
 function autoMap(headers){
   var map = {}, taken = {};
-  ["name","qty","settle","rev","date"].forEach(function(role){
+  ["order","name","qty","settle","rev","disc","date"].forEach(function(role){
     var bi = -1, bs = 0;
     headers.forEach(function(h, i){
       if (taken[i]) return;
@@ -466,20 +483,58 @@ function detectFeeSigns(rows, map){
   return { feeMul: feeMul, flipped: flipped };
 }
 
-/* 상품별 집계. 반품은 음수 행이므로 매출·수수료·원가에서 자연히 빠진다. */
-function aggregate(rows, map, feeMul, costs, ad){
-  costs = costs || {}; ad = ad || 0;
-  var ni = map.name, qi = map.qty, ri = map.rev, by = {}, order = [];
+/* 정산 파일에서 주문이 몇 건인지. 한 주문에 상품이 여럿이면 행도 여러 개라,
+   행 수로 세면 주문 수가 상품 수만큼 부풀려진다. */
+function countOrders(rows, map){
+  var oi = map.order, ri = map.rev, seen = {}, n = 0;
+  if (oi == null) return 0;
+  for (var i = 0; i < rows.length; i++){
+    if (num(rows[i][ri]) <= 0) continue;           // 반품 행은 새 배송이 아니다
+    var k = String(rows[i][oi] == null ? "" : rows[i][oi]).trim();
+    if (!k || seen[k]) continue;
+    seen[k] = 1; n++;
+  }
+  return n;
+}
+
+/* 상품별 집계. 반품은 음수 행이므로 매출·수수료·원가에서 자연히 빠진다.
+
+   opts.ship    건당 실제 택배비. 주문번호 컬럼이 있어야 계산한다.
+   opts.useDisc 매출 칸이 할인 전 금액일 때만 켠다. 할인 후 금액에서 또 빼면
+                없는 적자가 생긴다. */
+function aggregate(rows, map, feeMul, costs, ad, opts){
+  costs = costs || {}; ad = ad || 0; opts = opts || {};
+  var ship = Number(opts.ship) || 0, useDisc = !!opts.useDisc;
+  var ni = map.name, qi = map.qty, ri = map.rev, oi = map.order, di = map.disc;
+  var by = {}, order = [];
+
+  /* 택배비는 주문 단위로 나간다. 한 주문 안에 상품이 여럿이면
+     그 주문의 택배비를 상품들의 매출 비중으로 나눠 붙인다. */
+  var ordRev = {};
+  if (ship && oi != null){
+    for (var j = 0; j < rows.length; j++){
+      var k0 = String(rows[j][oi] == null ? "" : rows[j][oi]).trim();
+      if (!k0) continue;
+      ordRev[k0] = (ordRev[k0] || 0) + Math.max(0, num(rows[j][ri]));
+    }
+  }
+
   for (var i = 0; i < rows.length; i++){
     var r = rows[i];
     var nm = String(r[ni] == null ? "" : r[ni]).trim();
     if (!nm || SUMMARY_WORDS.indexOf(nm.toLowerCase()) >= 0) continue;
     var fee = 0;
     (map.fee || []).forEach(function(ci){ fee += num(r[ci]) * (feeMul[ci] == null ? 1 : feeMul[ci]); });
-    if (!by[nm]){ by[nm] = { name: nm, qty: 0, rev: 0, fee: 0 }; order.push(nm); }
+    if (!by[nm]){ by[nm] = { name: nm, qty: 0, rev: 0, fee: 0, disc: 0, ship: 0 }; order.push(nm); }
     by[nm].qty += (qi == null ? 0 : num(r[qi]));
     by[nm].rev += num(r[ri]);
     by[nm].fee += fee;
+    if (di != null) by[nm].disc += num(r[di]);      // 부호는 마지막에 정리한다
+    if (ship && oi != null){
+      var k = String(r[oi] == null ? "" : r[oi]).trim();
+      var tot = ordRev[k] || 0;
+      if (k && tot > 0) by[nm].ship += ship * (Math.max(0, num(r[ri])) / tot);
+    }
   }
   var items = order.map(function(k){ return by[k]; });
   var posRev = items.reduce(function(s, o){ return s + Math.max(0, o.rev); }, 0);
@@ -493,7 +548,8 @@ function aggregate(rows, map, feeMul, costs, ad){
     o.unit   = Number((costs[o.name] != null ? costs[o.name] : costIdx[norm(o.name)]) || 0);
     o.cogs   = o.unit * o.qty;
     o.ad     = posRev > 0 ? ad * (Math.max(0, o.rev) / posRev) : 0;
-    o.profit = o.rev - o.fee - o.cogs - o.ad;
+    o.disc   = Math.abs(o.disc);                   // 마켓마다 +로도 -로도 적는다
+    o.profit = o.rev - o.fee - o.cogs - o.ad - o.ship - (useDisc ? o.disc : 0);
     o.margin = o.rev !== 0 ? o.profit / o.rev : 0;
   });
   return items;
@@ -604,13 +660,14 @@ function mergeItems(lists, alias){
       var key = alias[o.name] || norm(o.name);
       if (!by[key]){
         by[key] = { name: o.name, qty: 0, rev: 0, fee: 0, cogs: 0, ad: 0,
-                    profit: 0, _srcs: {} };
+                    ship: 0, disc: 0, profit: 0, _srcs: {} };
         order.push(key);
       }
       var t = by[key];
       if (String(o.name).length > String(t.name).length) t.name = o.name;  // 긴 쪽이 정보가 많다
       t.qty += o.qty; t.rev += o.rev; t.fee += o.fee;
       t.cogs += o.cogs; t.ad += o.ad; t.profit += o.profit;
+      t.ship += (o.ship || 0); t.disc += (o.disc || 0);
       if (o.src != null) t._srcs[o.src] = 1;
     });
   });
@@ -655,6 +712,7 @@ function proposeMerges(lists, opts){
 
 var API = { ALIAS: ALIAS, norm: norm, num: num, findHeader: findHeader,
             autoMap: autoMap, detectFeeSigns: detectFeeSigns, aggregate: aggregate,
+            countOrders: countOrders,
             parseCostPaste: parseCostPaste, similar: similar, matchCosts: matchCosts,
             mergeItems: mergeItems, proposeMerges: proposeMerges };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
@@ -662,22 +720,28 @@ root.XRAY = API;
 })(typeof globalThis !== "undefined" ? globalThis : this);
 
 
-const { num, findHeader, autoMap, detectFeeSigns, aggregate,
+const { num, findHeader, autoMap, detectFeeSigns, aggregate, countOrders,
         parseCostPaste, matchCosts, mergeItems, proposeMerges, norm } = XRAY;
-const ROLE_KO = {name:"상품명",qty:"수량",rev:"매출",fee:"수수료",date:"날짜"};
+const ROLE_KO = {name:"상품명",qty:"수량",rev:"매출",fee:"수수료",
+                 order:"주문번호",disc:"판매자 부담 할인",date:"날짜"};
 const fmt    = n => (n<0?"-":"") + Math.round(Math.abs(n)).toLocaleString("ko-KR");
 const signed = n => (n>0?"+":n<0?"-":"") + Math.round(Math.abs(n)).toLocaleString("ko-KR");
 const esc    = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* 파일마다 컬럼도 수수료 부호도 광고비도 다르다. 집계는 파일별로 따로 하고
    합치는 것은 그 결과다. alias 는 사용자가 직접 같은 상품이라고 묶어준 것. */
-let S = { sources:[], active:0, costs:{}, alias:{}, sort:{k:"profit",dir:1} };
+let S = { sources:[], active:0, costs:{}, alias:{}, ship:0, useDisc:false,
+          sort:{k:"profit",dir:1} };
 const cur = () => S.sources[S.active] || null;
 
 const loadCosts = () => { try { return JSON.parse(localStorage.getItem("xray.costs")||"{}"); } catch { return {}; } };
+const loadOpts  = () => { try { return JSON.parse(localStorage.getItem("xray.opts")||"{}"); } catch { return {}; } };
+const saveOpts  = () => { try { localStorage.setItem("xray.opts",
+  JSON.stringify({ ship: S.ship, useDisc: S.useDisc })); } catch {} };
 const saveCosts = () => { try { localStorage.setItem("xray.costs", JSON.stringify(S.costs)); } catch {} };
 const items = () => mergeItems(S.sources.map(src =>
-  aggregate(src.rows, src.map, src.feeMul, S.costs, src.ad)
+  aggregate(src.rows, src.map, src.feeMul, S.costs, src.ad,
+            { ship: S.ship, useDisc: S.useDisc })
     .map(o => Object.assign(o, { src: src.label }))), S.alias);
 
 function renderMapTabs(){
@@ -705,7 +769,7 @@ function renderMaps(){
   sn.hidden = !A.flipped;
   if (A.flipped) sn.innerHTML = `<span aria-hidden="true">⚑</span><div>수수료를
     <b>음수로 적는 컬럼 ${A.flipped}개</b>를 찾아 부호를 보정했습니다. 마켓마다 표기가 달라 생기는 차이입니다.</div>`;
-  for (const role of ["name","qty","rev","fee","date"]){
+  for (const role of ["name","qty","rev","fee","order","disc","date"]){
     const multi = role === "fee";
     const cur = multi ? (A.map.fee||[]) : A.map[role];
     const opts = A.headers.map((h,i) =>
@@ -722,7 +786,7 @@ function renderMaps(){
       if (multi) A.map.fee = [...e.target.selectedOptions].map(o => +o.value);
       else { const v = +e.target.value; A.map[role] = v < 0 ? null : v; }
       A.feeMul = detectFeeSigns(A.rows, A.map).feeMul;
-      renderCosts(); renderResults(); renderMerge();
+      renderCosts(); renderExtras(); renderResults(); renderMerge();
     });
   }
 }
@@ -828,7 +892,9 @@ function renderResults(){
   const list = items();
   if (!list.length) return;
   const T = list.reduce((a,o) => ({ rev:a.rev+o.rev, fee:a.fee+o.fee, cogs:a.cogs+o.cogs,
-    ad:a.ad+o.ad, profit:a.profit+o.profit }), {rev:0,fee:0,cogs:0,ad:0,profit:0});
+    ad:a.ad+o.ad, ship:a.ship+o.ship, disc:a.disc+o.disc, profit:a.profit+o.profit }),
+    {rev:0,fee:0,cogs:0,ad:0,ship:0,disc:0,profit:0});
+  const showShip = T.ship > 0, showDisc = S.useDisc && T.disc > 0;
   const margin = T.rev ? T.profit / T.rev : 0;
   const losers = list.filter(o => o.profit < 0);
   const noCost = list.filter(o => !o.unit).length;
@@ -843,6 +909,10 @@ function renderResults(){
     <div class="tile"><div class="k">원가</div><div class="v">${fmt(T.cogs)}</div><div class="s">매출의 ${pct(T.cogs)}%</div></div>
     <div class="tile"><div class="k">광고비</div><div class="v">${fmt(T.ad)}</div>
       <div class="s">${T.ad ? `매출의 ${pct(T.ad)}%` : "미입력"}</div></div>
+    ${showShip ? `<div class="tile"><div class="k">택배비</div><div class="v">${fmt(T.ship)}</div>
+      <div class="s">매출의 ${pct(T.ship)}%</div></div>` : ""}
+    ${showDisc ? `<div class="tile"><div class="k">판매자 부담 할인</div><div class="v">${fmt(T.disc)}</div>
+      <div class="s">매출의 ${pct(T.disc)}%</div></div>` : ""}
     <div class="tile"><div class="k">적자 상품</div>
       <div class="v ${losers.length?"neg":""}">${losers.length}<span style="font-size:15px"> 개</span></div>
       <div class="s">${losers.length
@@ -873,10 +943,14 @@ function renderResults(){
   const {k, dir} = S.sort;
   const rows = [...shown].sort((a,b) =>
     k === "name" ? dir * a.name.localeCompare(b.name, "ko") : dir * ((b[k]??0) - (a[k]??0)));
+  document.querySelector('#tbl th[data-k="ship"]').hidden = !showShip;
+  document.querySelector('#tbl th[data-k="disc"]').hidden = !showDisc;
   document.querySelector("#tbl tbody").innerHTML = rows.map(o => `
     <tr class="${o.profit<0?"alert":""}">
       <td class="l">${esc(o.name)}</td><td>${fmt(o.qty)}</td><td>${fmt(o.rev)}</td>
       <td>${fmt(o.fee)}</td><td>${fmt(o.cogs)}</td><td>${fmt(o.ad)}</td>
+      ${showShip ? `<td>${fmt(o.ship)}</td>` : ""}
+      ${showDisc ? `<td>${fmt(o.disc)}</td>` : ""}
       <td class="${o.profit>=0?"pos":"neg"}">${signed(o.profit)}</td>
       <td class="${o.profit>=0?"pos":"neg"}">${(o.margin*100).toFixed(1)}%</td></tr>`).join("");
 
@@ -996,7 +1070,8 @@ function renderMerge(){
   if (S.sources.length < 2){ box.hidden = true; box.innerHTML = ""; return; }
 
   const lists = S.sources.map(src =>
-    aggregate(src.rows, src.map, src.feeMul, S.costs, src.ad)
+    aggregate(src.rows, src.map, src.feeMul, S.costs, src.ad,
+              { ship: S.ship, useDisc: S.useDisc })
       .map(o => Object.assign(o, { src: src.label })));
   const pairs = proposeMerges(lists).filter(pr => !S.alias[pr.a] && !S.alias[pr.b]);
 
@@ -1020,9 +1095,70 @@ function renderMerge(){
   });
 }
 
+/* 택배비와 할인. 둘 다 정산 파일만으로는 알 수 없거나, 잘못 빼면
+   없는 적자가 생기는 값이라 조건이 맞을 때만 내놓는다. */
+function renderExtras(){
+  const box = document.getElementById("extras");
+  box.innerHTML = "";
+  if (!S.sources.length) return;
+
+  const hasOrder = S.sources.some(x => x.map.order != null);
+  const orders = S.sources.reduce((n, x) => n + countOrders(x.rows, x.map), 0);
+  const hasDisc = S.sources.some(x => x.map.disc != null);
+
+  // ── 택배비 ──
+  if (hasOrder){
+    const d = document.createElement("div");
+    d.className = "adrow";
+    d.innerHTML = `<label for="ship">건당 실제 택배비</label>`;
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "0"; inp.step = "100"; inp.inputMode = "numeric";
+    inp.id = "ship"; inp.value = S.ship || ""; inp.placeholder = "0";
+    inp.addEventListener("input", () => {
+      S.ship = Number(inp.value) || 0; saveOpts(); renderCosts(); renderResults();
+      const n = document.getElementById("shipnote");
+      if (n) n.textContent = note();
+    });
+    d.appendChild(inp);
+    const sm = document.createElement("small");
+    sm.id = "shipnote";
+    const note = () => S.ship
+      ? `원 — 주문 ${orders.toLocaleString("ko-KR")}건 기준 ${fmt(S.ship * orders)}원. 한 주문에 상품이 여럿이면 매출 비중으로 나눕니다.`
+      : `원 — 택배사 계약 단가입니다. 정산 파일에 없는 정보라 직접 넣으셔야 합니다. 주문 ${orders.toLocaleString("ko-KR")}건을 찾았습니다.`;
+    sm.textContent = note();
+    d.appendChild(sm);
+    box.appendChild(d);
+  } else {
+    const p = document.createElement("p");
+    p.className = "off";
+    p.textContent = "택배비는 주문번호 컬럼이 있어야 계산합니다. "
+      + "지금 파일에서 찾지 못했습니다. 컬럼 확인에서 직접 지정하시면 계산합니다.";
+    box.appendChild(p);
+  }
+
+  // ── 할인 ──
+  if (hasDisc){
+    const lab = document.createElement("label");
+    lab.className = "chk";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = S.useDisc;
+    cb.addEventListener("change", () => {
+      S.useDisc = cb.checked; saveOpts(); renderCosts(); renderResults(); renderMerge();
+    });
+    const txt = document.createElement("span");
+    txt.innerHTML = `<b>매출 칸이 할인 전 금액입니다</b>
+      <em>판매자 부담 할인 컬럼을 찾았습니다. 보통 매출 칸에는 할인이 이미 빠져 있어서
+      꺼둡니다. 켜면 할인을 한 번 더 뺍니다 — 이미 빠진 금액에서 또 빼면 없는 적자가
+      생기니, 상품가격 × 수량과 매출 칸을 한 줄만 비교해보고 켜세요.</em>`;
+    lab.append(cb, txt);
+    box.appendChild(lab);
+  }
+}
+
 /* 파일이 늘거나 줄거나 묶이면 화면 전체를 다시 그린다 */
 function refresh(){
-  renderSources(); renderMaps(); renderMerge(); renderCosts(); renderAds(); renderResults();
+  renderSources(); renderMaps(); renderMerge(); renderCosts(); renderAds();
+  renderExtras(); renderResults();
   const A = cur();
   document.getElementById("period").textContent =
     S.sources.length > 1 ? `${S.sources.length}개 파일 합산` : (A ? A.label : "");
@@ -1077,9 +1213,16 @@ document.getElementById("reset").onclick = () => {
 document.getElementById("copy").onclick = async () => {
   if (LITE) return;
   const list = items().sort((a,b) => a.profit - b.profit);
-  const tsv = ["상품명\t수량\t매출\t수수료\t원가\t광고비\t순이익\t마진율(%)",
+  // 화면에 안 보이는 칸은 복사본에도 넣지 않는다. 엑셀에서 0만 늘어난 열은 방해가 된다.
+  const sh = list.some(o => o.ship > 0), dc = S.useDisc && list.some(o => o.disc > 0);
+  const head = ["상품명","수량","매출","수수료","원가","광고비"]
+    .concat(sh ? ["택배비"] : []).concat(dc ? ["판매자부담할인"] : [])
+    .concat(["순이익","마진율(%)"]).join("\t");
+  const tsv = [head,
     ...list.map(o => [o.name, Math.round(o.qty), Math.round(o.rev), Math.round(o.fee),
-      Math.round(o.cogs), Math.round(o.ad), Math.round(o.profit), (o.margin*100).toFixed(1)].join("\t"))
+      Math.round(o.cogs), Math.round(o.ad)]
+      .concat(sh ? [Math.round(o.ship)] : []).concat(dc ? [Math.round(o.disc)] : [])
+      .concat([Math.round(o.profit), (o.margin*100).toFixed(1)]).join("\t"))
   ].join("\n");
   const btn = document.getElementById("copy");
   try {
@@ -1106,6 +1249,7 @@ if (LITE){
 
 // 빈 껍데기가 아니라, 처음부터 결과가 보이는 상태로 연다
 S.costs = loadCosts();
+Object.assign(S, loadOpts());
 document.getElementById("demo").click();
 </script>
 

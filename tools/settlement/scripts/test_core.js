@@ -166,6 +166,14 @@ console.log("\n── 마켓 합산 ──");
   const adTotal = m.reduce((s, o) => s + o.ad, 0);
   ok(adTotal === 12000, "광고비 총액이 합산 과정에서 보존된다", `→ ${adTotal.toLocaleString()}원`);
 
+  /* 택배비와 할인도 합산 결과에 남아야 한다. 순이익만 맞고 내역이 사라지면
+     화면에서 택배비 칸이 통째로 안 보인다. */
+  const withShip = X.mergeItems([[Object.assign(mk("스마트스토어","X",1,1000,0,0,0),
+                                                { ship: 500, disc: 300 })]]);
+  ok(withShip[0].ship === 500 && withShip[0].disc === 300,
+     "합산해도 택배비와 할인 내역이 남는다",
+     `택배비 ${withShip[0].ship} / 할인 ${withShip[0].disc}`);
+
   /* 이름이 많이 다르면 묶지 않고 물어본다 */
   const p = X.proposeMerges([
     [{ name: "캠핑용 폴딩 의자" }],
@@ -186,6 +194,64 @@ console.log("\n── 마켓 합산 ──");
   const spaced = {}; spaced["[특가] " + oneName.replace(/ /g, "")] = 12345;
   const withCost = X.aggregate(rws, mp, feeMul, spaced, 0).find(o => o.name === oneName);
   ok(withCost.unit === 12345, "표기가 달라도 원가를 찾아 쓴다", `→ ${withCost.unit}`);
+}
+
+/* 택배비와 할인 */
+console.log("\n── 택배비 ──");
+{
+  const grid = [
+    ["주문번호","상품명","수량","결제금액","판매수수료","판매자부담할인액"],
+    ["A1","아몬드",  1,  20000, 1000, 2000],
+    ["A1","집게",    1,  30000, 1500, 3000],   // 같은 주문에 상품 둘
+    ["A2","아몬드",  2,  40000, 2000, 4000],
+    ["A3","아몬드", -1, -20000,-1000,-2000],   // 반품
+  ];
+  const hd = grid[0], rws = grid.slice(1);
+  const mp = X.autoMap(hd);
+
+  ok(mp.order != null && hd[mp.order] === "주문번호", "주문번호 컬럼 인식");
+  ok(mp.disc  != null && hd[mp.disc]  === "판매자부담할인액", "판매자 부담 할인액 컬럼 인식");
+  ok(!mp.fee.includes(mp.disc), "할인 컬럼이 수수료에 섞이지 않음");
+  ok(!mp.fee.includes(mp.order), "주문번호가 수수료에 섞이지 않음");
+
+  ok(X.countOrders(rws, mp) === 2, "주문 수는 행 수가 아니라 주문번호 기준",
+     `행 4개 → 주문 ${X.countOrders(rws, mp)}건`);
+
+  const { feeMul } = X.detectFeeSigns(rws, mp);
+  const it = X.aggregate(rws, mp, feeMul, {}, 0, { ship: 3000 });
+  const al = it.find(o => o.name === "아몬드"), jg = it.find(o => o.name === "집게");
+
+  ok(near(al.ship + jg.ship, 6000, 0.01), "택배비 총액 = 단가 × 주문 수",
+     `${Math.round(al.ship + jg.ship)} / 6000`);
+  ok(near(jg.ship, 1800, 0.01), "한 주문 안에서는 매출 비중으로 나눔",
+     `집게 ${Math.round(jg.ship)} (30000/50000 × 3000)`);
+  ok(near(al.ship, 4200, 0.01), "반품 행에는 택배비가 붙지 않음",
+     `아몬드 ${Math.round(al.ship)} = 1200 + 3000`);
+
+  const noShip = X.aggregate(rws, mp, feeMul, {}, 0, {});
+  ok(noShip.every(o => o.ship === 0), "단가를 안 넣으면 택배비는 0");
+
+  const noOrder = Object.assign({}, mp, { order: null });
+  const it2 = X.aggregate(rws, noOrder, feeMul, {}, 0, { ship: 3000 });
+  ok(it2.every(o => o.ship === 0), "주문번호가 없으면 택배비를 계산하지 않음");
+
+  console.log("\n── 할인 ──");
+  ok(near(al.disc, 4000, 0.01), "할인은 상품별로 합산, 반품분은 상계",
+     `아몬드 ${Math.round(al.disc)} = 2000 + 4000 − 2000`);
+  ok(near(al.profit, al.rev - al.fee - al.ship, 0.01),
+     "기본값은 할인을 빼지 않음 (매출이 보통 할인 후 금액이라)");
+
+  const on = X.aggregate(rws, mp, feeMul, {}, 0, { ship: 3000, useDisc: true });
+  const alOn = on.find(o => o.name === "아몬드");
+  ok(near(alOn.profit, al.profit - 4000, 0.01), "켜면 판매자 부담 할인만큼 더 뺌",
+     `${Math.round(al.profit)} → ${Math.round(alOn.profit)}`);
+
+  const neg = rws.map(r => r.slice());
+  neg.forEach(r => { r[5] = -r[5]; });                 // 할인을 반대 부호로 적은 파일
+  const it3 = X.aggregate(neg, mp, X.detectFeeSigns(neg, mp).feeMul, {}, 0,
+                          { ship: 3000, useDisc: true });
+  ok(near(it3.find(o => o.name === "아몬드").profit, alOn.profit, 0.01),
+     "할인을 음수로 적은 파일도 같은 결과");
 }
 
 console.log(`\n${fails ? "실패" : "통과"}: ${checks - fails}/${checks}`);

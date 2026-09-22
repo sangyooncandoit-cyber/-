@@ -10,6 +10,9 @@ var ALIAS = {
   fee:   ["수수료","판매수수료","결제수수료","주문관리수수료","매출연동수수료","서비스이용료",
           "쿠폰분담금","할인분담금","차감액","공제금액"],
   settle:["정산금액","정산대상금액","정산예정금액","실지급액","지급액"],
+  order: ["주문번호","상품주문번호","묶음배송번호","배송비묶음번호","주문no"],
+  disc:  ["판매자부담할인액","판매자부담할인","셀러부담할인","판매자할인액",
+          "판매자부담쿠폰","즉시할인액","상품할인액"],
   date:  ["정산완료일","정산일","정산기준일","결제일","주문일","날짜"]
 };
 var SUMMARY_WORDS = ["합계","소계","총계","계","total"];
@@ -58,7 +61,7 @@ function scoreHeader(h, alias){
 /* 컬럼 → 역할. 수수료만 여러 컬럼을 동시에 가진다. */
 function autoMap(headers){
   var map = {}, taken = {};
-  ["name","qty","settle","rev","date"].forEach(function(role){
+  ["order","name","qty","settle","rev","disc","date"].forEach(function(role){
     var bi = -1, bs = 0;
     headers.forEach(function(h, i){
       if (taken[i]) return;
@@ -91,20 +94,58 @@ function detectFeeSigns(rows, map){
   return { feeMul: feeMul, flipped: flipped };
 }
 
-/* 상품별 집계. 반품은 음수 행이므로 매출·수수료·원가에서 자연히 빠진다. */
-function aggregate(rows, map, feeMul, costs, ad){
-  costs = costs || {}; ad = ad || 0;
-  var ni = map.name, qi = map.qty, ri = map.rev, by = {}, order = [];
+/* 정산 파일에서 주문이 몇 건인지. 한 주문에 상품이 여럿이면 행도 여러 개라,
+   행 수로 세면 주문 수가 상품 수만큼 부풀려진다. */
+function countOrders(rows, map){
+  var oi = map.order, ri = map.rev, seen = {}, n = 0;
+  if (oi == null) return 0;
+  for (var i = 0; i < rows.length; i++){
+    if (num(rows[i][ri]) <= 0) continue;           // 반품 행은 새 배송이 아니다
+    var k = String(rows[i][oi] == null ? "" : rows[i][oi]).trim();
+    if (!k || seen[k]) continue;
+    seen[k] = 1; n++;
+  }
+  return n;
+}
+
+/* 상품별 집계. 반품은 음수 행이므로 매출·수수료·원가에서 자연히 빠진다.
+
+   opts.ship    건당 실제 택배비. 주문번호 컬럼이 있어야 계산한다.
+   opts.useDisc 매출 칸이 할인 전 금액일 때만 켠다. 할인 후 금액에서 또 빼면
+                없는 적자가 생긴다. */
+function aggregate(rows, map, feeMul, costs, ad, opts){
+  costs = costs || {}; ad = ad || 0; opts = opts || {};
+  var ship = Number(opts.ship) || 0, useDisc = !!opts.useDisc;
+  var ni = map.name, qi = map.qty, ri = map.rev, oi = map.order, di = map.disc;
+  var by = {}, order = [];
+
+  /* 택배비는 주문 단위로 나간다. 한 주문 안에 상품이 여럿이면
+     그 주문의 택배비를 상품들의 매출 비중으로 나눠 붙인다. */
+  var ordRev = {};
+  if (ship && oi != null){
+    for (var j = 0; j < rows.length; j++){
+      var k0 = String(rows[j][oi] == null ? "" : rows[j][oi]).trim();
+      if (!k0) continue;
+      ordRev[k0] = (ordRev[k0] || 0) + Math.max(0, num(rows[j][ri]));
+    }
+  }
+
   for (var i = 0; i < rows.length; i++){
     var r = rows[i];
     var nm = String(r[ni] == null ? "" : r[ni]).trim();
     if (!nm || SUMMARY_WORDS.indexOf(nm.toLowerCase()) >= 0) continue;
     var fee = 0;
     (map.fee || []).forEach(function(ci){ fee += num(r[ci]) * (feeMul[ci] == null ? 1 : feeMul[ci]); });
-    if (!by[nm]){ by[nm] = { name: nm, qty: 0, rev: 0, fee: 0 }; order.push(nm); }
+    if (!by[nm]){ by[nm] = { name: nm, qty: 0, rev: 0, fee: 0, disc: 0, ship: 0 }; order.push(nm); }
     by[nm].qty += (qi == null ? 0 : num(r[qi]));
     by[nm].rev += num(r[ri]);
     by[nm].fee += fee;
+    if (di != null) by[nm].disc += num(r[di]);      // 부호는 마지막에 정리한다
+    if (ship && oi != null){
+      var k = String(r[oi] == null ? "" : r[oi]).trim();
+      var tot = ordRev[k] || 0;
+      if (k && tot > 0) by[nm].ship += ship * (Math.max(0, num(r[ri])) / tot);
+    }
   }
   var items = order.map(function(k){ return by[k]; });
   var posRev = items.reduce(function(s, o){ return s + Math.max(0, o.rev); }, 0);
@@ -118,7 +159,8 @@ function aggregate(rows, map, feeMul, costs, ad){
     o.unit   = Number((costs[o.name] != null ? costs[o.name] : costIdx[norm(o.name)]) || 0);
     o.cogs   = o.unit * o.qty;
     o.ad     = posRev > 0 ? ad * (Math.max(0, o.rev) / posRev) : 0;
-    o.profit = o.rev - o.fee - o.cogs - o.ad;
+    o.disc   = Math.abs(o.disc);                   // 마켓마다 +로도 -로도 적는다
+    o.profit = o.rev - o.fee - o.cogs - o.ad - o.ship - (useDisc ? o.disc : 0);
     o.margin = o.rev !== 0 ? o.profit / o.rev : 0;
   });
   return items;
@@ -229,13 +271,14 @@ function mergeItems(lists, alias){
       var key = alias[o.name] || norm(o.name);
       if (!by[key]){
         by[key] = { name: o.name, qty: 0, rev: 0, fee: 0, cogs: 0, ad: 0,
-                    profit: 0, _srcs: {} };
+                    ship: 0, disc: 0, profit: 0, _srcs: {} };
         order.push(key);
       }
       var t = by[key];
       if (String(o.name).length > String(t.name).length) t.name = o.name;  // 긴 쪽이 정보가 많다
       t.qty += o.qty; t.rev += o.rev; t.fee += o.fee;
       t.cogs += o.cogs; t.ad += o.ad; t.profit += o.profit;
+      t.ship += (o.ship || 0); t.disc += (o.disc || 0);
       if (o.src != null) t._srcs[o.src] = 1;
     });
   });
@@ -280,6 +323,7 @@ function proposeMerges(lists, opts){
 
 var API = { ALIAS: ALIAS, norm: norm, num: num, findHeader: findHeader,
             autoMap: autoMap, detectFeeSigns: detectFeeSigns, aggregate: aggregate,
+            countOrders: countOrders,
             parseCostPaste: parseCostPaste, similar: similar, matchCosts: matchCosts,
             mergeItems: mergeItems, proposeMerges: proposeMerges };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
