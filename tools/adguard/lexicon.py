@@ -41,7 +41,42 @@ WEAK = [
 ]
 
 # 홍보 채널 — 숨긴 글에 연락처가 있으면 광고일 확률이 매우 높다
-CHANNEL = ["텔레그램", "telegram", "카톡", "kakao", "오픈채팅", "라인상담", "@"]
+CHANNEL = ["텔레그램", "telegram", "카톡", "kakao", "오픈채팅", "라인상담"]
+
+# 핸들(@promo_777)만 신호로 본다. 그냥 이메일 주소는 아니다.
+HANDLE = re.compile(r'(?<![\w.])@[A-Za-z0-9_]{3,}')
+
+# 한국어는 낱말 사이에 띄어쓰기가 없어서 부분 문자열로 찾으면 엉뚱한 데 걸린다.
+# 실제로 '오피니언' 이 '오피' 로, '주유소·충전소' 가 '충전' 으로 잡혔다.
+# 뒤에 이 글자가 붙으면 그 자리는 세지 않는다.
+EMBEDDED = {
+    "오피": ("니언", "스텔", "스"),
+    "포커": ("스",),
+    "충전": ("소", "기", "시설", "함", "량", "율", "지"),
+    "환전": ("소",),
+    "성인": ("식", "병", "교육", "문해", "학습", "지"),
+    "출장": ("소", "길"),
+    "안마": ("의자", "기", "사"),
+    "토토": ("로",),
+    "사다리": ("차", "꼴"),
+    "명품": ("관", "도시", "교육"),
+    "슬롯": (),
+    "배팅": (),
+}
+
+
+def term_in(term, low):
+    """낱말이 '그 뜻으로' 쓰였는지. 더 긴 낱말에 묻힌 것은 아니라고 본다."""
+    tail = EMBEDDED.get(term)
+    if not tail:
+        return term in low
+    i = low.find(term)
+    while i >= 0:
+        rest = low[i + len(term):]
+        if not rest.startswith(tail):
+            return True
+        i = low.find(term, i + 1)
+    return False
 
 ALL_TERMS = STRONG + WEAK
 STRONG_SET = set(STRONG)
@@ -59,13 +94,16 @@ def ad_score(text):
     low = text.lower()
     hits, score = [], 0
     for t in ALL_TERMS:
-        if t.lower() in low:
+        if term_in(t.lower(), low):
             hits.append(t)
             score += 2 if t in STRONG_SET else 1
     for t in CHANNEL:
         if t.lower() in low:
             hits.append(t)
             score += 1
+    if HANDLE.search(text):
+        hits.append("@핸들")
+        score += 1
     if URLISH.search(text):
         hits.append("주소")
         score += 1
