@@ -1,0 +1,52 @@
+name: windows-probe
+
+# 진짜 도구를 만들기 전에 윈도우 빌드 경로가 되는지부터 확인한다.
+on:
+  push:
+    paths:
+      - 'tools/adguard/probe.py'
+      - '.github/workflows/windows-probe.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-run:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller lxml cssselect tinycss2 requests
+
+      - name: exe 빌드
+        run: >
+          pyinstaller --onefile --console --clean
+          --name adguard-probe
+          tools/adguard/probe.py
+
+      - name: 윈도우에서 실제로 실행
+        shell: cmd
+        run: |
+          chcp 65001
+          dist\adguard-probe.exe
+
+      - name: 용량 확인
+        shell: pwsh
+        run: |
+          $f = Get-Item dist\adguard-probe.exe
+          $mb = [math]::Round($f.Length / 1MB, 1)
+          Write-Host "exe 크기 : $mb MB"
+          Write-Host "윈도우 버전 : $([System.Environment]::OSVersion.VersionString)"
+          if ($mb -gt 60) { Write-Error "메일로 보내기엔 크다 ($mb MB)" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: adguard-probe-exe
+          path: |
+            dist/adguard-probe.exe
+            dist/probe_result.json
