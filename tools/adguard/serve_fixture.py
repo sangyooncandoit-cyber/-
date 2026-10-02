@@ -6,6 +6,8 @@ import sys
 import urllib.parse
 from pathlib import Path
 
+from winout import force_utf8
+
 ROOT = Path(__file__).parent / "fixture"
 
 
@@ -30,6 +32,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    force_utf8()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8731
     os.chdir(ROOT)
     socketserver.TCPServer.allow_reuse_address = True

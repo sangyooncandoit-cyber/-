@@ -24,18 +24,11 @@ from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from winout import force_utf8
+
 KST = timezone(timedelta(hours=9))
 VERSION = "1.0.0"
 
-
-def force_utf8():
-    """윈도우 콘솔 기본 코드페이지가 cp949/cp1252 라 한글을 찍으면 죽는다.
-    리눅스에서는 재현되지 않으니 반드시 맨 앞에서 열어 둔다."""
-    for s in (sys.stdout, sys.stderr):
-        try:
-            s.reconfigure(encoding="utf-8", errors="replace")
-        except (AttributeError, OSError):
-            pass
 
 
 def base_dir():

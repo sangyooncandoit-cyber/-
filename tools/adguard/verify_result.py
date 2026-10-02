@@ -11,6 +11,8 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
+
+from winout import force_utf8
 from urllib.parse import urlparse, urldefrag
 
 TECHNIQUES = {"HOMOGLYPH", "JAMO", "TRANSPARENT", "OFFSCREEN"}
@@ -19,13 +21,6 @@ META_ALLOWED = META_REQUIRED | {"tool_version"}
 FINDING_REQUIRED = ["id", "url", "is_violation", "location", "evidence_text", "technique"]
 TIMEOUT_SEC = 30 * 60          # 상한 30분. 넘기면 검출 시간 20점이 0점이다.
 
-
-def force_utf8():
-    for s in (sys.stdout, sys.stderr):
-        try:
-            s.reconfigure(encoding="utf-8", errors="replace")
-        except (AttributeError, OSError):
-            pass
 
 
 def norm_url(u):

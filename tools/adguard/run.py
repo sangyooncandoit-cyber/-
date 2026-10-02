@@ -5,18 +5,13 @@ import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+from winout import force_utf8
+
 sys.path.insert(0, str(Path(__file__).parent))
 from scan import crawl                                      # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 
-
-def force_utf8():
-    for s in (sys.stdout, sys.stderr):
-        try:
-            s.reconfigure(encoding="utf-8", errors="replace")
-        except (AttributeError, OSError):
-            pass
 
 
 def build_result(entry_url, findings, started_at, finished_at, elapsed):

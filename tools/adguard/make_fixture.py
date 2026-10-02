@@ -10,6 +10,8 @@
 import json
 from pathlib import Path
 
+from winout import force_utf8
+
 OUT = Path(__file__).parent / "fixture"
 ANSWERS = []
 
@@ -99,6 +101,7 @@ add("widget.html|iframe", 'iframe[src="widget.html"] >>> div.wrap > span.tiny',
 
 
 def main():
+    force_utf8()
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "style.css").write_text(CSS, encoding="utf-8")
     for name, html in PAGES.items():

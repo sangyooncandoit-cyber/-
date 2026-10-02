@@ -11,6 +11,8 @@ import json
 import re
 import sys
 from pathlib import Path
+
+from winout import force_utf8
 from urllib.parse import urljoin, urlparse, urldefrag
 
 import lxml.html
@@ -75,6 +77,7 @@ def resolve(base, location, cache):
 
 
 def main(result_path, answers_path, base_root):
+    force_utf8()
     result = json.loads(Path(result_path).read_text(encoding="utf-8"))
     answers = json.loads(Path(answers_path).read_text(encoding="utf-8"))
     cache = {}
