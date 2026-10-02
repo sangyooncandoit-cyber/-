@@ -6,3 +6,9 @@ tools/settlement/deliverable/*.html
 
 # 프로필 사진 — 본인 얼굴이 담긴 개인 파일이라 원격 저장소에 올리지 않는다
 tools/settlement/profile/
+
+# 공모전 제출 서류 — 이름·연락처·주소·서명이 찍히므로 원격 저장소에 올리지 않는다.
+# 생성기(_*_생성.py)만 저장소에 두고, 만든 PDF 는 바깥 폴더에 쓴다.
+contests/*_제출/*.pdf
+contests/*_제출/_*.html
+contests/*_제출/_fig*.png
