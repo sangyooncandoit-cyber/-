@@ -112,13 +112,21 @@ def analyse_document(html, page_url, fetcher, frame_srcs=(), host_url=None):
         # 1·2. 글자 자체를 비튼 경우 — 숨어 있지 않아도 그 자체가 회피 행위다
         if (hg := find_homoglyph(text)):
             norm, scripts = hg
-            ok, _ = looks_like_ad(norm, threshold=1)
+            ok, hits = looks_like_ad(norm, threshold=1)
             if ok:
-                techniques.append(("HOMOGLYPH", text))
+                techniques.append(("HOMOGLYPH", text, {
+                    "reason": f"{', '.join(scripts)} 문자를 섞어 필터를 피함",
+                    "normalized": norm,
+                    "signals": hits,
+                }))
         if (jm := find_jamo(text)):
-            ok, _ = looks_like_ad(jm, threshold=1)
+            ok, hits = looks_like_ad(jm, threshold=1)
             if ok:
-                techniques.append(("JAMO", text))
+                techniques.append(("JAMO", text, {
+                    "reason": "음절을 자모로 쪼개 키워드 매칭을 우회함",
+                    "normalized": jm,
+                    "signals": hits,
+                }))
 
         # 3·4. 숨긴 경우 — 광고처럼 보일 때만 신고한다 (오탐은 정확도 35점을 깎는다)
         style = cas.computed(el)
@@ -131,22 +139,31 @@ def analyse_document(html, page_url, fetcher, frame_srcs=(), host_url=None):
                 probe = hg2[0]
             if (jm2 := find_jamo(probe)):
                 probe = jm2
-            ok, _ = looks_like_ad(probe, threshold=2)
+            ok, hits = looks_like_ad(probe, threshold=2)
             if ok:
+                extra = {"normalized": probe if probe != text else "",
+                         "signals": hits}
                 if trans:
-                    techniques.append(("TRANSPARENT", text))
+                    techniques.append(("TRANSPARENT", text,
+                                       dict(extra, reason=trans)))
                 if off:
-                    techniques.append(("OFFSCREEN", text))
+                    techniques.append(("OFFSCREEN", text,
+                                       dict(extra, reason=off)))
 
         if techniques:
             loc = full_location(el, tree, frame_srcs, report_url)
-            for tech, evidence in techniques:
+            for tech, evidence, extra in techniques:
                 findings.append({
                     "url": report_url,
                     "is_violation": True,
                     "location": loc,
                     "evidence_text": evidence,
                     "technique": tech,
+                    # 아래는 화면 전용. result.json 에는 나가지 않는다.
+                    "_reason": extra.get("reason", ""),
+                    "_normalized": extra.get("normalized", ""),
+                    "_signals": extra.get("signals", []),
+                    "_tag": el.tag,
                 })
 
     host = urlparse(page_url).netloc.lower()
