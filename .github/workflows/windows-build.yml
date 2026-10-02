@@ -29,6 +29,9 @@ jobs:
       - name: 정답을 아는 시험용 사이트 만들기
         run: python tools/adguard/make_fixture.py
 
+      - name: 탐지 규칙 회귀 시험
+        run: python tools/adguard/test_detect.py
+
       - name: exe 빌드
         shell: cmd
         run: >
