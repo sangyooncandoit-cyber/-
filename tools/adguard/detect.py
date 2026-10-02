@@ -52,15 +52,44 @@ def normalize_confusables(text):
     return unicodedata.normalize("NFKC", t)
 
 
+ASCII_LETTER = re.compile(r'[A-Za-z]')
+
+
+def suspect_letters(tok):
+    """토큰 안에서 '글자 대신 쓰인' 의심 문자만 센다.
+
+    기호와 문장부호는 빼야 한다. ⓒ 는 저작권 표시고, （）％ 는 한국 글에서
+    그냥 쓰는 전각 부호다. 글자나 숫자 자리를 차지한 것만 위장 후보다."""
+    return [c for c in tok
+            if script_of(c) and unicodedata.category(c)[0] in "LN"]
+
+
+def mixed_token(tok):
+    """이 토큰이 '섞어 쓴' 것인가. 홀로 선 기호나 번호는 아니다."""
+    n = len(suspect_letters(tok))
+    if n >= 2:
+        return True
+    if n == 0:
+        return False
+    # 한 글자뿐이면 낱말 안에 끼어 있을 때만 위장으로 본다.
+    # ① 번, 100Ω, μm 같은 정상 표기를 신고하지 않기 위한 선이다.
+    return bool(ASCII_LETTER.search(tok)) and len(tok) >= 4
+
+
 def find_homoglyph(text):
-    """의심 스크립트 글자가 섞여 있으면 (정규화 결과, 쓰인 스크립트들)."""
-    scripts = {s for c in text if (s := script_of(c))}
-    if not scripts:
+    """의심 문자를 낱말에 '섞어' 쓴 곳이 있으면 (정규화 결과, 쓰인 스크립트들).
+
+    글 전체에 수상한 글자가 하나라도 있으면 잡던 것을 토큰 단위로 바꿨다.
+    실제 정부 누리집 뉴스 자막 끝의 ⓒ 하나 때문에 2천 자짜리 기사 전체가
+    위장으로 잡혔다. 정확도 점수가 그대로 깎이는 자리다."""
+    bad = [t for t in text.split() if mixed_token(t)]
+    if not bad:
         return None
     norm = normalize_confusables(text)
     if norm == text:
         return None
-    return norm, sorted(scripts)
+    scripts = sorted({s for t in bad for c in t if (s := script_of(c))})
+    return norm, scripts
 
 
 # ── 2. 자모 분해 ──────────────────────────────────────────────

@@ -60,6 +60,7 @@ class Job:
         self.elapsed = 0.0
         self.error = ""
         self.result = None
+        self.stats = {}
 
     def snapshot(self):
         with self.lock:
@@ -86,7 +87,7 @@ class Job:
         with self.lock:
             self._begin_locked(url)
 
-    def run(self, url, outdir):
+    def run(self, url, outdir, max_pages=None):
         from scan import crawl
         from run import build_result
 
@@ -100,7 +101,8 @@ class Job:
                 self.pages, self.current, self.found = n, page, found
 
         try:
-            findings, stats = crawl(url, progress=progress)
+            kw = {"max_pages": max_pages} if max_pages else {}
+            findings, stats = crawl(url, progress=progress, **kw)
             uniq, seen = [], set()
             for f in findings:
                 k = (f["url"], f["location"], f["technique"])
@@ -124,6 +126,7 @@ class Job:
 
             with self.lock:
                 self.result = shown
+                self.stats = stats
                 self.pages = stats["pages"]
                 self.found = len(uniq)
                 self.elapsed = elapsed
@@ -214,6 +217,8 @@ def main():
     ap.add_argument("--url", help="바로 탐지할 진입 주소")
     ap.add_argument("--headless", action="store_true", help="창 없이 돌리고 끝낸다")
     ap.add_argument("--out", default=None, help="result.json 을 만들 폴더")
+    ap.add_argument("--max-pages", type=int, default=None,
+                    help="살펴볼 페이지 수 상한 (기본 400)")
     args = ap.parse_args()
 
     global OUTDIR
@@ -225,12 +230,17 @@ def main():
             print("--headless 에는 --url 이 필요합니다.")
             return 2
         print(f"탐지 시작 : {args.url}")
-        r = JOB.run(args.url, OUTDIR)
+        r = JOB.run(args.url, OUTDIR, args.max_pages)
         s = JOB.snapshot()
         if s["error"]:
             print(s["error"])
             return 1
         print(f"페이지 {s['pages']}개 / {s['elapsed']:.1f}초 / 검출 {len(r['findings'])}건")
+        bad = JOB.stats.get("failed", [])
+        if bad:
+            print(f"못 읽은 페이지 {len(bad)}개 — 세 번 시도해도 응답이 없었습니다")
+            for u in bad[:5]:
+                print(f"  {u}")
         print(f"결과 파일 : {OUTDIR / 'result.json'}")
         return 0
 

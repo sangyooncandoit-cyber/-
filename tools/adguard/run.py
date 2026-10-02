@@ -62,6 +62,8 @@ def main():
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2),
                    encoding="utf-8")
     print(f"\n페이지 {stats['pages']}개 / {elapsed:.1f}초 / 검출 {len(uniq)}건")
+    if stats.get("failed"):
+        print(f"못 읽은 페이지 {len(stats['failed'])}개")
     print(f"결과 파일: {out}")
     return 0
 

@@ -14,6 +14,7 @@ from urllib.parse import urljoin
 
 import tinycss2
 from lxml import etree
+from lxml.cssselect import CSSSelector
 
 # 숨김과 관계있는 속성만 본다. 나머지는 계산할 이유가 없다.
 WATCH = {
@@ -101,22 +102,52 @@ def parse_inline(style_attr):
     return decls, important
 
 
-class Cascade:
-    """문서 하나에 대한 계산된 스타일 제공자."""
+_PARSED = {}        # 스타일시트 본문 -> 규칙 목록. 같은 사이트면 매 쪽 같다
+_SELECTOR = {}      # 선택자 문자열 -> 컴파일된 것
 
-    def __init__(self, tree, css_sources):
+
+def _parsed(text):
+    key = hash(text)
+    if key not in _PARSED:
+        _PARSED[key] = parse_stylesheet(text)
+    return _PARSED[key]
+
+
+def _compiled(sel):
+    if sel not in _SELECTOR:
+        try:
+            _SELECTOR[sel] = CSSSelector(sel, translator="html")
+        except Exception:
+            _SELECTOR[sel] = None   # 지원 못 하는 선택자
+    return _SELECTOR[sel]
+
+
+class Cascade:
+    """문서 하나에 대한 계산된 스타일 제공자.
+
+    만드는 비용이 크다. 선택자 수천 개를 문서 전체에 돌려야 한다.
+    그래서 처음 물어볼 때까지 아무것도 하지 않는다. 멀쩡한 페이지는
+    물어볼 일이 없어서 이 비용을 아예 치르지 않는다."""
+
+    def __init__(self, tree, css_loader):
         self.tree = tree
-        self.rules = []
-        for text in css_sources:
-            self.rules.extend(parse_stylesheet(text))
-        self._matched = {}          # 요소 -> [(우선순위, decls, important)]
+        self._load = css_loader
+        self._matched = None        # 요소 -> [(우선순위, 순서, decls, important)]
         self._computed = {}
-        self._build()
 
     def _build(self):
-        for sel, decls, important, order in self.rules:
+        if self._matched is not None:
+            return
+        self._matched = {}
+        rules = []
+        for text in self._load():
+            rules.extend(_parsed(text))
+        for sel, decls, important, order in rules:
+            sl = _compiled(sel)
+            if sl is None:
+                continue
             try:
-                targets = self.tree.cssselect(sel)
+                targets = sl(self.tree)
             except Exception:
                 continue            # 지원 못 하는 선택자는 건너뛴다
             spec = _specificity(sel)
@@ -128,6 +159,7 @@ class Cascade:
         """요소의 계산된 스타일. 상속도 반영한다."""
         if el in self._computed:
             return self._computed[el]
+        self._build()            # 처음 물어볼 때 만든다
 
         parent = el.getparent()
         style = {}
