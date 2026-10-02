@@ -1,0 +1,10 @@
+
+body { font-family: sans-serif; background:#ffffff; color:#222; margin:2em }
+.notice-board { border:1px solid #ddd; padding:1em }
+.visually-hidden { position:absolute; left:-9999px }
+.ghost { color: #ffffff }
+.tiny { font-size: 0px }
+.gone { display: none }
+.faded { opacity: 0 }
+.sr-only { position:absolute; left:-9999px }   /* 정상 용도 — 오탐 함정 */
+nav.menu .sub { display:none }                  /* 정상 용도 — 오탐 함정 */

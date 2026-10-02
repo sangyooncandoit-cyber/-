@@ -1,0 +1,44 @@
+[
+  {
+    "page": "index.html",
+    "location": "div.notice-board > table > tbody > tr:nth-of-type(3) > td.title > a",
+    "technique": "HOMOGLYPH",
+    "evidence_text": "ｍｅｇａ－ＢＥＴ 첫충 30％ 지급"
+  },
+  {
+    "page": "view.html?id=1024",
+    "location": "div.article-body > p.desc > span.ghost",
+    "technique": "JAMO",
+    "evidence_text": "ㅋㅏㅈㅣㄴㅗ ㅂㅗㄴㅓㅅㅡ 코드 LUCKY7"
+  },
+  {
+    "page": "view.html?id=1024",
+    "location": "div.article-body > p.desc > span.ghost",
+    "technique": "TRANSPARENT",
+    "evidence_text": "ㅋㅏㅈㅣㄴㅗ ㅂㅗㄴㅓㅅㅡ 코드 LUCKY7"
+  },
+  {
+    "page": "view.html?id=1024",
+    "location": "div.comments > p.c:nth-of-type(2) > span",
+    "technique": "OFFSCREEN",
+    "evidence_text": "먹튀검증 안전놀이터 상담 텔레그램 @promo_777"
+  },
+  {
+    "page": "view.html?id=1180",
+    "location": "div.article-body > div.gone",
+    "technique": "OFFSCREEN",
+    "evidence_text": "무료 슬롯 체험 바로가기 jackpot-win.vip"
+  },
+  {
+    "page": "view.html?id=1180",
+    "location": "div.article-body > p.faded",
+    "technique": "TRANSPARENT",
+    "evidence_text": "바카라 환전 보증업체 안내"
+  },
+  {
+    "page": "widget.html|iframe",
+    "location": "iframe[src=\"widget.html\"] >>> div.wrap > span.tiny",
+    "technique": "OFFSCREEN",
+    "evidence_text": "홀덤 포커 가입코드 ABC123"
+  }
+]
