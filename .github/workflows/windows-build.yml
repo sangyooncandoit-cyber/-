@@ -1,0 +1,82 @@
+name: windows-build
+
+# 제출용 구동 파일을 윈도우에서 만들고, 같은 윈도우에서 실제로 돌려 본다.
+# "될 것이다"가 아니라 "됐다"를 받아 내려고 둔 워크플로다.
+# 심사 PC 는 Windows 11 / GPU 없음. 러너는 Windows Server 2025 로 같은 커널이다.
+
+on:
+  push:
+    paths:
+      - 'tools/adguard/**'
+      - '.github/workflows/windows-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller lxml cssselect tinycss2 requests
+
+      - name: 정답을 아는 시험용 사이트 만들기
+        run: python tools/adguard/make_fixture.py
+
+      - name: exe 빌드
+        shell: cmd
+        run: >
+          pyinstaller --onefile --console --clean
+          --name adguard
+          --paths tools/adguard
+          --add-data "tools/adguard/ui.html;."
+          --add-data "tools/adguard/app.js;."
+          tools/adguard/app.py
+
+      - name: 시험용 사이트 띄우기
+        shell: pwsh
+        run: |
+          Start-Process -FilePath python `
+            -ArgumentList 'tools/adguard/serve_fixture.py','8731' `
+            -WindowStyle Hidden
+          Start-Sleep -Seconds 3
+          (Invoke-WebRequest -Uri 'http://127.0.0.1:8731/index.html' -UseBasicParsing).StatusCode
+
+      - name: 윈도우에서 실제로 실행 — 한글 출력까지 확인
+        shell: cmd
+        run: |
+          chcp 65001
+          dist\adguard.exe --headless --url http://127.0.0.1:8731/index.html
+
+      - name: result.json 검증 — 스키마와 검출 건수
+        shell: pwsh
+        run: python tools/adguard/verify_result.py dist/result.json
+
+      - name: 정답표와 대조 — 검출 개수와 오탐
+        shell: pwsh
+        run: >
+          python tools/adguard/evaluate.py dist/result.json
+          tools/adguard/fixture/answers.json http://127.0.0.1:8731
+
+      - name: 용량과 환경 확인
+        shell: pwsh
+        run: |
+          $f = Get-Item dist\adguard.exe
+          $mb = [math]::Round($f.Length / 1MB, 1)
+          Write-Host "exe 크기    : $mb MB"
+          Write-Host "윈도우 버전 : $([System.Environment]::OSVersion.VersionString)"
+          # 접수가 이메일이다. 용량이 곧 제출 가능 여부다.
+          if ($mb -gt 60) { Write-Error "메일로 보내기엔 크다 ($mb MB)" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: adguard-exe
+          path: |
+            dist/adguard.exe
+            dist/result.json

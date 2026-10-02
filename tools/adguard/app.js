@@ -70,6 +70,9 @@ async function poll() {
     if (s.running) return setTimeout(poll, 500);
 
     const data = await (await fetch("/api/result")).json();
+    if (!data.meta || !data.meta.entry_url) {
+      return fail("결과를 읽지 못했습니다. 다시 시도해 주세요.");
+    }
     $("#progress").style.display = "none";
     $("#go").disabled = false;
     render(data, s);
@@ -225,3 +228,15 @@ $("#csv").onclick = () => {
   URL.revokeObjectURL(a.href);
 };
 $("#print").onclick = () => window.print();
+
+/* ── 명령줄로 주소를 받아 열렸으면 바로 시작한다 ────────
+   adguard.exe --url https://example.go.kr 처럼 켜면 app.py 가
+   ?url= 을 붙여서 화면을 연다. 심사자가 주소만 넣고 켰는데
+   아무 일도 안 일어나는 상황을 막는다. */
+(() => {
+  const preset = new URLSearchParams(location.search).get("url");
+  if (!preset) return;
+  $("#url").value = preset;
+  $("#form").requestSubmit ? $("#form").requestSubmit()
+                           : $("#form").dispatchEvent(new Event("submit"));
+})();

@@ -8,12 +8,19 @@ location 은 문자열이 같은지가 아니라 같은 요소를 가리키는�
 채점 기준이 그렇다. 그래서 실제로 선택자를 돌려 비교한다.
 """
 import json
+import re
 import sys
 from pathlib import Path
-from urllib.parse import urlparse, urldefrag
+from urllib.parse import urljoin, urlparse, urldefrag
 
 import lxml.html
 import requests
+
+
+def norm(u):
+    """주소 비교용. 끝의 / 와 # 뒤는 보지 않는다."""
+    u, _ = urldefrag(u or "")
+    return u.rstrip("/")
 
 
 def page_key(url):
@@ -38,15 +45,24 @@ def resolve(base, location, cache):
                 return None
         tree = cache[url]
         if i < len(parts) - 1:
-            # iframe[src="..."] 에서 주소를 꺼낸다
-            try:
-                el = tree.cssselect(seg)[0]
-            except Exception:
+            # iframe[src="..."] 에서 주소를 꺼낸다.
+            # 공고문은 src 를 절대 주소로 적으라고 하는데 문서에는 상대 경로로
+            # 적혀 있는 경우가 많다. 문자열이 아니라 '풀어 놓은 주소'로 맞춘다.
+            m = re.match(r'(?:iframe|frame)\[src=(?:"([^"]*)"|\'([^\']*)\')\]\s*$', seg)
+            if m:
+                want = norm(urljoin(url, m.group(1) or m.group(2)))
+                el = next((fr for fr in tree.cssselect("iframe[src], frame[src]")
+                           if norm(urljoin(url, fr.get("src"))) == want), None)
+            else:
+                hits = []
+                try:
+                    hits = tree.cssselect(seg)
+                except Exception:
+                    return None
+                el = hits[0] if len(hits) == 1 else None
+            if el is None:
                 return None
-            url = el.get("src")
-            if not url.startswith("http"):
-                from urllib.parse import urljoin
-                url = urljoin(base, url)
+            url = urljoin(url, el.get("src"))
         else:
             try:
                 hits = tree.cssselect(seg)

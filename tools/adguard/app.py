@@ -19,6 +19,7 @@ import sys
 import threading
 import time
 import webbrowser
+from urllib.parse import quote
 from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -79,15 +80,26 @@ class Job:
                 "error": self.error,
             }
 
+    def _begin_locked(self, url):
+        self.reset()
+        self.running = True
+        self.entry = url
+        self.started = time.monotonic()
+
+    def begin(self, url):
+        """스레드를 띄우기 전에 '돌고 있다'를 먼저 세운다.
+        작은 사이트는 스레드가 뜨기도 전에 화면이 상태를 물어 와서,
+        아직 시작 안 한 것을 '끝났는데 결과가 없다'로 읽어 버린다."""
+        with self.lock:
+            self._begin_locked(url)
+
     def run(self, url, outdir):
         from scan import crawl
         from run import build_result
 
         with self.lock:
-            self.reset()
-            self.running = True
-            self.entry = url
-            self.started = time.monotonic()
+            if not self.running:        # headless 처럼 begin 을 거치지 않은 길
+                self._begin_locked(url)
         started_at = datetime.now(KST)
 
         def progress(n, page, found):
@@ -180,6 +192,7 @@ class Handler(BaseHTTPRequestHandler):
             if JOB.running:
                 return self._send(409, "이미 탐지 중입니다.".encode(),
                                   "text/plain; charset=utf-8")
+        JOB.begin(url)
         threading.Thread(target=JOB.run, args=(url, OUTDIR), daemon=True).start()
         self._json({"ok": True})
 
@@ -234,12 +247,15 @@ def main():
         return 1
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"
+    # --url 만 주고 켰을 때 화면이 그냥 열리고 끝나지 않도록, 주소를 들려 보내
+    # 화면이 알아서 탐지를 시작하게 한다.
+    open_url = url + ("?url=" + quote(args.url, safe="") if args.url else "")
     print("공공 웹사이트 불법광고 탐지 도구")
     print(f"  화면 주소 : {url}")
     print(f"  결과 파일 : {OUTDIR / 'result.json'}")
     print("  이 창을 닫으면 종료됩니다.")
     try:
-        webbrowser.open(url)
+        webbrowser.open(open_url)
     except Exception:
         print("  브라우저가 자동으로 열리지 않으면 위 주소를 직접 입력해 주세요.")
     try:
