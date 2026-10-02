@@ -346,7 +346,7 @@ python tools/adguard/evaluate.py dist/result.json ^
     <b>같은 요소를 가리키는지</b>로 비교합니다</td></tr>
 </table>
 
-<h2 class="pb">6. 윈도우 PC 없이 빌드하기</h2>
+<h2>6. 윈도우 PC 없이 빌드하기</h2>
 <p>이 도구는 리눅스에서 개발했고 윈도우 PC 가 없었습니다. 그래서
 <b>GitHub Actions 의 윈도우 러너에서 빌드하고 같은 러너에서 실행까지 시켜</b>
 결과물을 내려받는 방법을 썼습니다. "될 것이다"가 아니라 "됐다"를 받아 내는 방법입니다.</p>
