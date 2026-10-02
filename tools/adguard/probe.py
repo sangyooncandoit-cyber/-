@@ -19,7 +19,19 @@ from pathlib import Path
 KST = timezone(timedelta(hours=9))
 
 
+def force_utf8():
+    """윈도우 콘솔은 기본 코드페이지가 cp949/cp1252 라서 한글을 찍는 순간
+    UnicodeEncodeError 로 죽는다. 리눅스에서는 재현되지 않는다.
+    심사 PC 에서 켜자마자 꺼지는 사고를 막으려면 이걸 맨 앞에 둬야 한다."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
+
+
 def main():
+    force_utf8()
     # 실제 탐지에 쓸 것들이 번들에서 살아있는지
     import lxml.html
     import tinycss2
