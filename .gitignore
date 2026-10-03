@@ -13,3 +13,4 @@ contests/*_제출/*.pdf
 contests/*_제출/_*.html
 contests/*_제출/_fig*.png
 tools/adguard/result.json
+tools/settlement/package/portfolio/
